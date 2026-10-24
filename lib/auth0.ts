@@ -1,5 +1,7 @@
 import type { Auth0Client } from "@auth0/auth0-spa-js";
 import { ApiError } from "./api/errors";
+import { Auth0SessionRecovery } from "./auth0-session";
+import { Auth0TabCache } from "./auth0-cache";
 export interface IdentityToken {
   token: string;
   expiresAt: string;
@@ -37,6 +39,13 @@ function configured() {
     process.env.NEXT_PUBLIC_AUTH0_AUDIENCE
   );
 }
+function recovery() {
+  return new Auth0SessionRecovery(
+    `dubbingnow.auth0-session.v1:${process.env.NEXT_PUBLIC_AUTH0_CLIENT_ID}:${process.env.NEXT_PUBLIC_AUTH0_AUDIENCE}`,
+    window.localStorage,
+    window.sessionStorage,
+  );
+}
 async function client() {
   if (!configured())
     throw new ApiError(
@@ -53,9 +62,9 @@ async function client() {
         audience: process.env.NEXT_PUBLIC_AUTH0_AUDIENCE!,
         scope: "openid profile email offline_access",
       },
-      cacheLocation: "memory",
+      cache: new Auth0TabCache(window.sessionStorage),
       useRefreshTokens: true,
-      useRefreshTokensFallback: true,
+      useRefreshTokensFallback: false,
     });
     const query = new URLSearchParams(window.location.search);
     if (
@@ -66,10 +75,14 @@ async function client() {
       try {
         const result = await sdk.handleRedirectCallback();
         callbackReturnTo = safeReturnPath(result.appState?.returnTo);
+        recovery().remember();
+      } catch (error) {
+        recovery().forget();
+        throw error;
       } finally {
         window.history.replaceState({}, "", "/auth/callback");
       }
-    } else await sdk.checkSession();
+    }
     return sdk;
   })();
   return clientPromise;
@@ -78,7 +91,21 @@ export const auth0Identity: IdentityBridge = {
   async getToken() {
     if (typeof window === "undefined" || !configured()) return null;
     const sdk = await client();
-    if (!(await sdk.isAuthenticated())) return null;
+    if (!(await sdk.isAuthenticated())) {
+      await recovery().restore(() =>
+        sdk.loginWithRedirect({
+          appState: {
+            returnTo: safeReturnPath(
+              window.location.pathname +
+                window.location.search +
+                window.location.hash,
+            ),
+          },
+          authorizationParams: { prompt: "none" },
+        }),
+      );
+      return null;
+    }
     try {
       const token = await sdk.getTokenSilently({ detailedResponse: true });
       if (!token) throw new Error("No access token returned.");
@@ -96,6 +123,7 @@ export const auth0Identity: IdentityBridge = {
     }
   },
   async login(mode, returnTo) {
+    recovery().retry();
     // A failed callback must not prevent a fresh login attempt.
     try {
       await client();
@@ -110,6 +138,7 @@ export const auth0Identity: IdentityBridge = {
     });
   },
   async logout() {
+    recovery().forget();
     await (
       await client()
     ).logout({ logoutParams: { returnTo: window.location.origin } });

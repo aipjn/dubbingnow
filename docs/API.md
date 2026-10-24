@@ -12,13 +12,14 @@
 
 - Allowed Callback URLs：`http://127.0.0.1:3000/auth/callback`，正式域名的 `/auth/callback`；使用 localhost 时也单独添加。
 - Allowed Logout URLs / Allowed Web Origins：对应完整网站 origin，不带路径；正式环境使用 HTTPS。
-- 启用 Refresh Token Rotation、对应应用 Refresh Token grant，以及 API 的 Allow Offline Access。SDK 请求 `openid profile email offline_access`，token cache 在内存中，刷新页面通过 SDK 的会话恢复。浏览器拦截跨站会话时可能需要重新登录，账户和积分仍保存在后台。
+- 启用 Refresh Token Rotation、对应应用 Refresh Token grant，以及 API 的 Allow Offline Access。SDK 请求 `openid profile email offline_access`，凭据通过 SDK 自定义 cache 保存在当前标签页的 sessionStorage，刷新后保留，退出由 SDK 清除；不把凭据写入 localStorage。SDK 继续管理过期与刷新令牌轮换。关闭标签页后仅保留非凭据的登录提示，再通过 Auth0 顶层页面验证已有会话；恢复失败不自动循环跳转。
+- 本地回调可能被 Auth0 强制要求重新确认授权，因此本地的跨标签页/关页恢复不等于正式 HTTPS 域名验收。sessionStorage 可被同源脚本读取，本站应避免不可信脚本并按正式部署要求管理脚本来源。
 - 配置 Universal Login 品牌、邮件/密码或社交 connections、邮件发送。本站 `/register` 只是 `screen_hint=signup` 的入口。
 - 不向前端放 Client Secret、Auth0 Management API token、Turnstile secret 或支付密钥。返回路径只允许本站相对路径。
 
 每个受保护请求：`Authorization: Bearer <API access token>`。后台根据 Auth0 JWKS 验证签名、固定允许的算法、issuer、audience、exp/nbf，拒绝 ID token；不能信任前端 SDK user、email、role 或请求体指定的用户 ID。用 `(issuer, sub)` 唯一关联应用用户，email 只是联系资料。Auth0 自定义 claim 或后台授权表决定 admin，普通用户无权选择角色。所有账户请求重新检查数据库 `status`；暂停账户返回 403 `ACCOUNT_SUSPENDED`，读任务、签上传地址、扣费及管理接口也必须执行。
 
-`GET /v1/users/me`：只接受 Auth0 access token。返回 User `{id,email,displayName,role,status,createdAt}`。首次已验证身份访问时在一个数据库事务中创建应用用户、钱包和一次注册赠送记录；默认赠送 **500 积分**，唯一约束防止并发请求、刷新、重复登录和退出再登录重复领积分。是否改邮件不产生新账户。`PATCH /users/me` 只接收 `{displayName}`，不能写 role/status/balance。Auth0 凭证管理留在托管登录服务。
+`GET /v1/users/me`：只接受 Auth0 access token。返回 User `{id,email,displayName,role,status,createdAt}`。首次已验证身份访问时在一个数据库事务中创建应用用户、钱包和一次注册赠送记录；真实后端默认上限 **50 积分**（演示默认 500），唯一约束防止并发请求、刷新、重复登录和退出再登录重复领积分。是否改邮件不产生新账户。`PATCH /users/me` 只接收 `{displayName}`，不能写 role/status/balance。Auth0 凭证管理留在托管登录服务。
 
 参考：[Auth0 SPA SDK](https://auth0.com/docs/libraries/auth0-single-page-app-sdk)、[Access token 验证](https://auth0.com/docs/secure/tokens/access-tokens/validate-access-tokens)、[Refresh Token Rotation](https://auth0.com/docs/secure/tokens/refresh-tokens/refresh-token-rotation)。
 
