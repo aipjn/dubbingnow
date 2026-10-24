@@ -137,7 +137,11 @@ export class Backend {
         contentType: "audio/wav",
         expiresAt: new Date(Date.now() + 900000).toISOString(),
       };
-      result = { ...result, preview: asset, download: asset };
+      result = {
+        ...result,
+        preview: asset,
+        download: { ...asset, url: asset.url + "&download=1" },
+      };
     }
     return {
       id: row.id,
@@ -526,6 +530,8 @@ export class Backend {
     );
   }
   private async fileResult(request: Request, id: string, token: string | null) {
+    const attachment =
+      new URL(request.url).searchParams.get("download") === "1";
     const ticket = await this.storage.verify(token, "result", id),
       row = await this.store.job(await this.store.actor(ticket.owner), id);
     requireValue(
@@ -545,6 +551,7 @@ export class Backend {
           Location: await this.storage.r2.resultUrl(
             key,
             request.method === "HEAD",
+            attachment ? `dubbed-${id}.wav` : undefined,
           ),
         },
       });
@@ -584,7 +591,7 @@ export class Backend {
       "Content-Type": "audio/wav",
       "Content-Length": String(end - start + 1),
       "Accept-Ranges": "bytes",
-      "Content-Disposition": `inline; filename="dubbed-${id}.wav"`,
+      "Content-Disposition": `${attachment ? "attachment" : "inline"}; filename="dubbed-${id}.wav"`,
     };
     if (status === 206)
       headers["Content-Range"] = `bytes ${start}-${end}/${size}`;

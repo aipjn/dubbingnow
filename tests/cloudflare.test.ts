@@ -7,7 +7,32 @@ import { tmpdir } from "node:os";
 import { CloudflareStore } from "../server/cloudflare-store";
 import { D1Failure } from "../server/cloudflare/d1";
 import { VoiceRecords } from "../server/cloudflare/voice-records";
+import { R2Storage } from "../server/cloudflare/r2";
 import { cloudConfig, d1Fixture } from "./helpers/cloudflare";
+
+test("R2 download signs attachment disposition while previews remain playable inline", async () => {
+  const storage = new R2Storage(cloudConfig(tmpdir()));
+  try {
+    const preview = new URL(await storage.resultUrl("results/test.wav"));
+    const download = new URL(
+      await storage.resultUrl("results/test.wav", false, "dubbed-test.wav"),
+    );
+    assert.equal(
+      preview.searchParams.get("response-content-disposition"),
+      null,
+    );
+    assert.equal(
+      download.searchParams.get("response-content-disposition"),
+      'attachment; filename="dubbed-test.wav"',
+    );
+    assert.notEqual(
+      preview.searchParams.get("X-Amz-Signature"),
+      download.searchParams.get("X-Amz-Signature"),
+    );
+  } finally {
+    storage.client.destroy();
+  }
+});
 
 async function fixture() {
   const dir = await mkdtemp(path.join(tmpdir(), "d1-test-")),

@@ -21,6 +21,7 @@ export type JobStatus =
 export type ApiErrorCode =
   | "INVALID_REQUEST"
   | "UNAUTHORIZED"
+  | "EMAIL_NOT_VERIFIED"
   | "RATE_LIMITED"
   | "QUOTA_EXCEEDED"
   | "FILE_TOO_LARGE"

@@ -7,13 +7,14 @@ import {
   useState,
 } from "react";
 import { getApi } from "@/lib/api";
-import { errorMessage } from "@/lib/api/errors";
-import type { BillingPolicy, Session } from "@/lib/api/types";
+import { ApiError, errorMessage } from "@/lib/api/errors";
+import type { ApiErrorCode, BillingPolicy, Session } from "@/lib/api/types";
 type AccountContext = {
   session: Session | null;
   policy: BillingPolicy | null;
   loading: boolean;
   error: string;
+  errorCode: ApiErrorCode | null;
   refresh: () => Promise<void>;
   logout: () => Promise<void>;
 };
@@ -23,6 +24,7 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
     [policy, setPolicy] = useState<BillingPolicy | null>(null),
     [loading, setLoading] = useState(true),
     [error, setError] = useState("");
+  const [errorCode, setErrorCode] = useState<ApiErrorCode | null>(null);
   const refresh = useCallback(async () => {
     try {
       const [current, rules] = await Promise.all([
@@ -32,8 +34,10 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
       setSession(current);
       setPolicy(rules);
       setError("");
+      setErrorCode(null);
     } catch (err) {
       setError(errorMessage(err));
+      setErrorCode(err instanceof ApiError ? err.code : null);
       throw err;
     } finally {
       setLoading(false);
@@ -48,7 +52,7 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
   }, [refresh]);
   return (
     <Context.Provider
-      value={{ session, policy, loading, error, refresh, logout }}
+      value={{ session, policy, loading, error, errorCode, refresh, logout }}
     >
       {children}
     </Context.Provider>

@@ -72,11 +72,16 @@ export function makeIdentityVerifier(
     const info = await response.json();
     requireValue(
       info.sub === payload.sub &&
-        info.email_verified === true &&
         typeof info.email === "string" &&
         info.email.length <= 254,
       "UNAUTHORIZED",
-      "Verify your email on the sign-in page before using your account.",
+      "Could not verify account details.",
+      401,
+    );
+    requireValue(
+      info.email_verified === true,
+      "EMAIL_NOT_VERIFIED",
+      "Verify your email before using your account. Check your inbox and spam folder for the verification message.",
       401,
     );
     const identity = {

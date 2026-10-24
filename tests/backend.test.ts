@@ -910,6 +910,14 @@ test("worker uses Google request adapter, real FFmpeg timing and signed range do
         url.pathname.replace("/v1/", "").split("/"),
       );
     assert.equal(response.status, 206);
+    assert.equal(
+      new URL(job.result.preview.url).searchParams.has("download"),
+      false,
+    );
+    assert.equal(
+      response.headers.get("Content-Disposition"),
+      `attachment; filename="dubbed-${job.id}.wav"`,
+    );
     assert.equal((await response.arrayBuffer()).byteLength, 44);
     assert.equal(
       (await call(f.backend, "POST", `jobs/${job.id}/cancel`, "user", {}))
@@ -1033,6 +1041,63 @@ test("Auth0 verifies real signatures/issuer/audience/expiry and rejects ID token
   } finally {
     globalThis.fetch = original;
     await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("unverified email cannot create a wallet; verification of the same token unlocks one signup grant", async () => {
+  const f = await fixture(),
+    original = globalThis.fetch;
+  f.c.signupCreditsCap = 50;
+  const { privateKey, publicKey } = await generateKeyPair("RS256");
+  const token = await new SignJWT({})
+    .setProtectedHeader({ alg: "RS256" })
+    .setSubject("pending-user")
+    .setIssuer(f.c.authIssuer)
+    .setAudience(f.c.authAudience)
+    .setIssuedAt()
+    .setExpirationTime("5m")
+    .sign(privateKey);
+  const backend = new Backend(f.c, f.store, {
+    verifyIdentity: makeIdentityVerifier(f.c, async () => publicKey),
+  });
+  let emailVerified = false;
+  globalThis.fetch = async () =>
+    new Response(
+      JSON.stringify({
+        sub: "pending-user",
+        email: "pending@example.test",
+        email_verified: emailVerified,
+        name: "Pending user",
+      }),
+    );
+  const counts = () =>
+    f.store.get<{ accounts: number; bonuses: number; available: number }>(
+      "SELECT (SELECT COUNT(*) FROM accounts) AS accounts,(SELECT COUNT(*) FROM credits WHERE type='signup_bonus') AS bonuses,COALESCE((SELECT SUM(available) FROM wallets),0) AS available",
+    );
+  try {
+    const before = await call(backend, "GET", "users/me", token);
+    assert.equal(before.response.status, 401);
+    assert.equal(before.body.error.code, "EMAIL_NOT_VERIFIED");
+    assert.match(before.body.error.message, /Verify your email/);
+    assert.deepEqual(
+      { ...counts() },
+      { accounts: 0, bonuses: 0, available: 0 },
+    );
+    emailVerified = true;
+    const after = await call(backend, "GET", "users/me", token);
+    assert.equal(after.response.status, 200);
+    assert.equal(after.body.email, "pending@example.test");
+    assert.equal(
+      (await call(backend, "GET", "users/me", token)).body.id,
+      after.body.id,
+    );
+    assert.deepEqual(
+      { ...counts() },
+      { accounts: 1, bonuses: 1, available: 50 },
+    );
+  } finally {
+    globalThis.fetch = original;
+    await f.close();
   }
 });
 

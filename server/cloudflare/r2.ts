@@ -142,7 +142,7 @@ export class R2Storage {
       }),
     );
   }
-  async resultUrl(key: string, head = false) {
+  async resultUrl(key: string, head = false, downloadFilename?: string) {
     return getSignedUrl(
       this.client,
       head
@@ -150,6 +150,11 @@ export class R2Storage {
         : new GetObjectCommand({
             ...this.object(key),
             ResponseContentType: "audio/wav",
+            ...(downloadFilename
+              ? {
+                  ResponseContentDisposition: `attachment; filename="${downloadFilename}"`,
+                }
+              : {}),
           }),
       { expiresIn: 300 },
     );
