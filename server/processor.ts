@@ -1,7 +1,8 @@
-import { mkdir, mkdtemp, rename, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { QuoteRequest, JobResult } from "../lib/api/types";
-import { Store, type JobRow } from "./store";
+import { type JobRow } from "./store";
+import type { DataStore } from "./persistence";
 import { PrivateStorage } from "./storage";
 import type { SpeechProvider } from "./providers/google";
 import { speechProvider } from "./providers";
@@ -10,12 +11,12 @@ import { dubRecording, type PipelineReport } from "./dubbing-pipeline";
 import { PipelineMetrics } from "./pipeline-metrics";
 export class Processor {
   constructor(
-    readonly store: Store,
+    readonly store: DataStore,
     readonly storage: PrivateStorage,
     private provider?: SpeechProvider,
   ) {}
   async runOnce(): Promise<boolean> {
-    const row = this.store.claim();
+    const row = await this.store.claim();
     if (!row) return false;
     await this.process(row);
     return true;
@@ -31,15 +32,23 @@ export class Processor {
       () => controller.abort(),
       config.maxJobRunMs ?? 900000,
     );
-    const heartbeat = setInterval(() => {
-      try {
-        if (!this.store.heartbeat(row.id, lease)) controller.abort();
-      } catch {
-        controller.abort();
-      }
-    }, 1000);
+    let heartbeatRunning = false;
+    const heartbeat = setInterval(
+      async () => {
+        if (heartbeatRunning) return;
+        heartbeatRunning = true;
+        try {
+          if (!(await this.store.heartbeat(row.id, lease))) controller.abort();
+        } catch {
+          controller.abort();
+        } finally {
+          heartbeatRunning = false;
+        }
+      },
+      this.storage.r2 ? 10000 : 1000,
+    );
     let dir: string | undefined,
-      published = false,
+      published: string | undefined,
       report: PipelineReport | undefined;
     let outcome = "failed";
     try {
@@ -47,14 +56,16 @@ export class Processor {
       await mkdir(workDir, { recursive: true, mode: 0o700 });
       dir = await mkdtemp(path.join(workDir, row.id + "-"));
       const input: QuoteRequest = JSON.parse(row.input),
-        actor = this.store.actor(row.owner),
-        upload = this.store.upload(actor, input.uploadId);
-      const consentFiles = new Map(
-        (input.consentUploads || []).map((c) => {
-          this.store.upload(actor, c.uploadId);
-          return [c.speaker, this.storage.file(c.uploadId, "upload")] as const;
-        }),
-      );
+        actor = await this.store.actor(row.owner),
+        upload = await this.store.upload(actor, input.uploadId);
+      const consentFiles = new Map<number, string>();
+      for (const c of input.consentUploads || []) {
+        const consent = await this.store.upload(actor, c.uploadId);
+        consentFiles.set(
+          c.speaker,
+          await this.storage.sourceFile(consent, dir),
+        );
+      }
       const result = await dubRecording(
         config,
         this.provider ||
@@ -63,7 +74,7 @@ export class Processor {
             jobId: row.id,
           }),
         {
-          source: this.storage.file(input.uploadId, "upload"),
+          source: await this.storage.sourceFile(upload, dir),
           audioDuration: upload.duration!,
           duration: row.duration,
           offset: input.timeline?.audioOffsetSeconds || 0,
@@ -76,17 +87,17 @@ export class Processor {
         },
         signal,
         metrics,
-        (status, progress) => this.store.stage(row.id, lease, status, progress),
+        async (status, progress) => {
+          await this.store.stage(row.id, lease, status, progress);
+        },
       );
       report = result.report;
-      this.store.stage(row.id, lease, "rendering", 95);
-      const final = this.storage.file(row.id, "result");
+      await this.store.stage(row.id, lease, "rendering", 95);
       await metrics.measure("publish", async () => {
-        await mkdir(path.dirname(final), { recursive: true, mode: 0o700 });
-        await rename(result.output, final);
+        published = await this.storage.publish(row.id, lease, result.output);
       });
-      published = true;
-      const jobResult: JobResult = {
+      const jobResult: JobResult & { _storageKey?: string } = {
+        ...(this.storage.r2 ? { _storageKey: published } : {}),
         mediaType: "audio",
         preview: {
           url: "",
@@ -107,9 +118,11 @@ export class Processor {
         isDemo: false,
         voiceMode: input.voiceMode || "preset",
       };
-      if (!this.store.settle(row.id, lease, "completed", jobResult, null)) {
-        await rm(final, { force: true });
-        published = false;
+      if (
+        !(await this.store.settle(row.id, lease, "completed", jobResult, null))
+      ) {
+        await this.storage.removeResult(published!);
+        published = undefined;
         outcome = "lease_lost";
       } else outcome = "completed";
     } catch (err) {
@@ -123,36 +136,58 @@ export class Processor {
               500,
               true,
             );
-      this.store.settle(row.id, lease, "failed", null, {
+      await this.store.settle(row.id, lease, "failed", null, {
         code: error.code,
         message: error.message,
         retryable: error.retryable,
       });
-      if (published)
-        await rm(this.storage.file(row.id, "result"), { force: true });
+      // A database timeout may have committed settlement. Keep the immutable result
+      // when its status is uncertain rather than removing a successfully billed result.
+      if (published) {
+        const current = await Promise.resolve(
+          this.store.get<JobRow>("SELECT * FROM jobs WHERE id=?", row.id),
+        ).catch(() => undefined);
+        if (current && current.status !== "completed")
+          await this.storage.removeResult(published);
+      }
     } finally {
       clearInterval(heartbeat);
       clearTimeout(deadline);
       if (dir) await rm(dir, { recursive: true, force: true });
       // Operational measurements contain no transcript, waveform, consent audio or voice key.
       try {
-        const metricsDir = path.join(config.dataDir, "metrics");
-        await mkdir(metricsDir, { recursive: true, mode: 0o700 });
-        await writeFile(
-          path.join(metricsDir, row.id + ".json"),
-          JSON.stringify(
-            {
+        if (this.storage.r2) {
+          await this.store.run(
+            "INSERT INTO pipeline_metrics(job_id,record,created) VALUES(?,?,?) ON CONFLICT(job_id) DO UPDATE SET record=excluded.record",
+            row.id,
+            JSON.stringify({
               jobId: row.id,
               outcome,
               queueMs,
               ...report,
               timings: metrics.snapshot(),
-            },
-            null,
-            2,
-          ),
-          { mode: 0o600 },
-        );
+            }),
+            Date.now(),
+          );
+        } else {
+          const metricsDir = path.join(config.dataDir, "metrics");
+          await mkdir(metricsDir, { recursive: true, mode: 0o700 });
+          await writeFile(
+            path.join(metricsDir, row.id + ".json"),
+            JSON.stringify(
+              {
+                jobId: row.id,
+                outcome,
+                queueMs,
+                ...report,
+                timings: metrics.snapshot(),
+              },
+              null,
+              2,
+            ),
+            { mode: 0o600 },
+          );
+        }
       } catch {
         /* Metrics failure must never change billing or job settlement. */
       }

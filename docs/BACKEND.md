@@ -1,3 +1,5 @@
+> 正式存储方案已更新为 Cloudflare D1 + 私有 R2，接入、凭据、初始化和云端验证见 [CLOUDFLARE_STORAGE.md](CLOUDFLARE_STORAGE.md)。下文的本地磁盘/SQLite 操作为 `PERSISTENCE_DRIVER=local` 开发模式。独立 worker 的处理链路保持不变。
+
 # 后台运行与配置
 
 当前实现是一个可持久运行的单机后台：Next.js Node 路由提供 `/v1` HTTP API，SQLite 保存用户、积分和任务，独立 worker 调用 Google / Fish 并处理音频。服务器只接收音频；原视频由浏览器保留，收到新音轨后自动合并。产品界面不展示提取、分段或合并等实现步骤。

@@ -6,7 +6,8 @@ import { z } from "zod";
 import { languages } from "../lib/catalog";
 import type { Job, JobResult, QuoteRequest } from "../lib/api/types";
 import { loadConfig, type ServerConfig } from "./config";
-import { Store, type Actor, type JobRow } from "./store";
+import { type Actor, type JobRow } from "./store";
+import { createStore, type DataStore } from "./persistence";
 import { PrivateStorage } from "./storage";
 import { BackendError, requireValue } from "./errors";
 import {
@@ -24,14 +25,15 @@ export class Backend {
   private ready: (input: QuoteRequest) => boolean;
   constructor(
     readonly config: ServerConfig,
-    readonly store: Store,
+    readonly store: DataStore,
     options: {
       verifyIdentity?: VerifyIdentity;
       verifyHuman?: VerifyHuman;
       providerReady?: () => boolean;
+      storage?: PrivateStorage;
     } = {},
   ) {
-    this.storage = new PrivateStorage(config, store);
+    this.storage = options.storage || new PrivateStorage(config, store);
     this.verifyIdentity =
       options.verifyIdentity || makeIdentityVerifier(config);
     this.verifyHuman = options.verifyHuman || makeHumanVerifier(config);
@@ -54,10 +56,10 @@ export class Backend {
       "Sign in or start a guest session.",
       401,
     );
-    this.store.rate("auth:" + this.risk(request), 300, 60000);
+    await this.store.rate("auth:" + this.risk(request), 300, 60000);
     const token = header.slice(7);
-    if (token.startsWith("guest_")) return this.store.guestByToken(token);
-    return this.store.ensureUser(await this.verifyIdentity(token));
+    if (token.startsWith("guest_")) return await this.store.guestByToken(token);
+    return await this.store.ensureUser(await this.verifyIdentity(token));
   }
   private ip(request: Request) {
     return this.config.trustProxy
@@ -121,6 +123,7 @@ export class Backend {
   private async view(row: JobRow): Promise<Job> {
     let result: JobResult | null = row.result ? JSON.parse(row.result) : null;
     if (result) {
+      delete (result as JobResult & { _storageKey?: string })._storageKey;
       requireValue(
         row.updated + this.config.retentionMs > Date.now() &&
           (await this.storage.resultExists(row.id)),
@@ -215,8 +218,8 @@ export class Backend {
       path = segments.join("/"),
       url = new URL(request.url);
     if (["health", "ready"].includes(path) && method === "GET") {
-      this.store.recoverExpiredJobs();
-      const worker = this.store.workerHealthy();
+      await this.store.recoverExpiredJobs();
+      const worker = await this.store.workerHealthy();
       const disk = await diskReady(this.config);
       const providers =
         !!this.config.googleKey &&
@@ -268,7 +271,7 @@ export class Backend {
         },
       });
     if (path === "billing/policy" && method === "GET")
-      return this.response(this.store.policy());
+      return this.response(await this.store.policy());
     if (path === "billing/plans" && method === "GET")
       return this.response([
         {
@@ -276,7 +279,7 @@ export class Backend {
           name: "Free",
           amountMinor: 0,
           currency: "USD",
-          includedCredits: this.store.policy().signupCredits,
+          includedCredits: (await this.store.policy()).signupCredits,
           available: true,
         },
         {
@@ -299,8 +302,8 @@ export class Backend {
     if (path === "sessions" && method === "POST") {
       await this.json(request, v.emptyBody);
       const risk = this.risk(request);
-      this.store.rate("sessions:" + risk, 20, 86400000);
-      return this.response(this.store.createGuest(risk), 201);
+      await this.store.rate("sessions:" + risk, 20, 86400000);
+      return this.response(await this.store.createGuest(risk), 201);
     }
     if (
       segments[0] === "files" &&
@@ -327,10 +330,10 @@ export class Backend {
         url.searchParams.get("ticket"),
       );
     const actor = await this.actor(request);
-    this.store.rate("api:" + actor.id, 180, 60000);
-    this.store.recoverExpiredJobs();
+    await this.store.rate("api:" + actor.id, 180, 60000);
+    await this.store.recoverExpiredJobs();
     if (path === "jobs" && method === "GET") {
-      const page = this.store.jobPage(
+      const page = await this.store.jobPage(
         actor,
         url.searchParams.get("cursor") || undefined,
       );
@@ -359,7 +362,7 @@ export class Backend {
       });
     }
     if (path === "quota" && method === "GET")
-      return this.response(this.store.quota(actor));
+      return this.response(await this.store.quota(actor));
     if (path === "guest/verify" && method === "POST") {
       requireValue(
         actor.kind === "guest",
@@ -367,28 +370,31 @@ export class Backend {
         "Guest verification requires a guest session.",
       );
       const input = await this.json(request, v.humanBody);
-      this.store.rate("verify:" + this.risk(request), 30, 60000);
+      await this.store.rate("verify:" + this.risk(request), 30, 60000);
       await this.verifyHuman(
         input.token,
         this.config.trustProxy ? this.ip(request) : undefined,
       );
-      return this.response(this.store.verifyGuest(actor, input.token));
+      return this.response(await this.store.verifyGuest(actor, input.token));
     }
     if (path === "users/me" && method === "GET")
-      return this.response(this.store.requireUser(actor));
+      return this.response(await this.store.requireUser(actor));
     if (path === "users/me" && method === "PATCH")
       return this.response(
-        this.store.updateProfile(
+        await this.store.updateProfile(
           actor,
           (await this.json(request, v.profileBody)).displayName,
         ),
       );
     if (path === "credits/transactions" && method === "GET")
       return this.response(
-        this.store.history(actor, url.searchParams.get("cursor") || undefined),
+        await this.store.history(
+          actor,
+          url.searchParams.get("cursor") || undefined,
+        ),
       );
     if (path === "uploads" && method === "POST") {
-      this.store.rate("upload:" + actor.id, 20, 3600000);
+      await this.store.rate("upload:" + actor.id, 20, 3600000);
       requireValue(
         await diskReady(this.config),
         "SERVICE_UNAVAILABLE",
@@ -397,17 +403,8 @@ export class Backend {
         true,
       );
       const input = await this.json(request, v.uploadBody),
-        row = this.store.newUpload(actor, input);
-      return this.response(
-        {
-          id: row.id,
-          url: this.storage.url("upload", row.id, actor.id, row.expires),
-          method: "PUT",
-          headers: { "Content-Type": input.contentType },
-          expiresAt: new Date(row.expires).toISOString(),
-        },
-        201,
-      );
+        row = await this.store.newUpload(actor, input);
+      return this.response(await this.storage.uploadTicket(row, input), 201);
     }
     if (
       segments[0] === "uploads" &&
@@ -419,9 +416,9 @@ export class Backend {
       return this.response(await this.storage.complete(actor.id, segments[1]));
     }
     if (path === "jobs/quote" && method === "POST") {
-      this.store.rate("quotes:" + actor.id, 60, 3600000);
+      await this.store.rate("quotes:" + actor.id, 60, 3600000);
       return this.response(
-        this.store.quote(actor, await this.json(request, v.quoteBody)),
+        await this.store.quote(actor, await this.json(request, v.quoteBody)),
         201,
       );
     }
@@ -429,7 +426,7 @@ export class Backend {
       const input = await this.json(request, v.jobBody);
       return this.response(
         await this.view(
-          this.store.createJob(
+          await this.store.createJob(
             actor,
             input,
             this.key(request),
@@ -440,7 +437,9 @@ export class Backend {
       );
     }
     if (segments[0] === "jobs" && segments.length === 2 && method === "GET")
-      return this.response(await this.view(this.store.job(actor, segments[1])));
+      return this.response(
+        await this.view(await this.store.job(actor, segments[1])),
+      );
     if (
       segments[0] === "jobs" &&
       segments[2] === "cancel" &&
@@ -449,12 +448,12 @@ export class Backend {
     ) {
       await this.json(request, v.emptyBody);
       return this.response(
-        await this.view(this.store.cancel(actor, segments[1])),
+        await this.view(await this.store.cancel(actor, segments[1])),
       );
     }
     if (path === "admin/users" && method === "GET")
       return this.response(
-        this.store.listUsers(
+        await this.store.listUsers(
           actor,
           (url.searchParams.get("query") || "").slice(0, 254),
           url.searchParams.get("cursor") || undefined,
@@ -467,7 +466,7 @@ export class Backend {
       method === "PATCH"
     )
       return this.response(
-        this.store.updateUser(
+        await this.store.updateUser(
           actor,
           segments[2],
           (await this.json(request, v.statusBody)).status,
@@ -482,7 +481,7 @@ export class Backend {
     ) {
       const input = await this.json(request, v.adjustmentBody);
       return this.response(
-        this.store.adjustCredits(
+        await this.store.adjustCredits(
           actor,
           segments[2],
           input.deltaCredits,
@@ -493,10 +492,13 @@ export class Backend {
     }
     if (path === "admin/billing/policy" && method === "PUT")
       return this.response(
-        this.store.updatePolicy(actor, await this.json(request, v.policyBody)),
+        await this.store.updatePolicy(
+          actor,
+          await this.json(request, v.policyBody),
+        ),
       );
     if (path === "billing/checkout" && method === "POST") {
-      this.store.requireUser(actor);
+      await this.store.requireUser(actor);
       throw new BackendError(
         "SERVICE_UNAVAILABLE",
         "Credit purchases are not enabled yet.",
@@ -509,7 +511,7 @@ export class Backend {
       segments.length === 3 &&
       method === "GET"
     ) {
-      this.store.requireUser(actor);
+      await this.store.requireUser(actor);
       throw new BackendError(
         "CHECKOUT_EXPIRED",
         "No active checkout was found.",
@@ -523,8 +525,8 @@ export class Backend {
     );
   }
   private async fileResult(request: Request, id: string, token: string | null) {
-    const ticket = this.storage.verify(token, "result", id),
-      row = this.store.job(this.store.actor(ticket.owner), id);
+    const ticket = await this.storage.verify(token, "result", id),
+      row = await this.store.job(await this.store.actor(ticket.owner), id);
     requireValue(
       row.status === "completed" &&
         row.updated + this.config.retentionMs > Date.now() &&
@@ -533,6 +535,19 @@ export class Backend {
       "This result has expired.",
       410,
     );
+    if (this.storage.r2) {
+      const key = await this.storage.resultKey(id);
+      requireValue(key, "RESULT_EXPIRED", "This result is unavailable.", 410);
+      return new Response(null, {
+        status: 307,
+        headers: {
+          Location: await this.storage.r2.resultUrl(
+            key,
+            request.method === "HEAD",
+          ),
+        },
+      });
+    }
     const filename = this.storage.file(id, "result"),
       size = (await stat(filename)).size;
     let start = 0,
@@ -586,6 +601,6 @@ let singleton: Backend | undefined;
 export function getBackend() {
   return (singleton ||= (() => {
     const config = loadConfig();
-    return new Backend(config, new Store(config));
+    return new Backend(config, createStore(config));
   })());
 }

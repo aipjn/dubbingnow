@@ -2,9 +2,9 @@ export function productionProblems(
   env: Record<string, string | undefined>,
 ): string[] {
   const issues: string[] = [];
+  const cloud = env.PERSISTENCE_DRIVER === "cloudflare" || !!env.VERCEL;
   const required = [
     "BACKEND_PUBLIC_URL",
-    "BACKEND_DATA_DIR",
     "STORAGE_SIGNING_SECRET",
     "GEMINI_API_KEY",
     "FISH_API_KEY",
@@ -18,14 +18,26 @@ export function productionProblems(
     "NEXT_PUBLIC_SUPPORT_EMAIL",
     "NEXT_PUBLIC_OPERATOR_NAME",
   ];
+  if (cloud)
+    required.push(
+      "CLOUDFLARE_ACCOUNT_ID",
+      "CLOUDFLARE_D1_DATABASE_ID",
+      "CLOUDFLARE_D1_API_TOKEN",
+      "CLOUDFLARE_R2_BUCKET",
+      "CLOUDFLARE_R2_ACCESS_KEY_ID",
+      "CLOUDFLARE_R2_SECRET_ACCESS_KEY",
+    );
+  else required.push("BACKEND_DATA_DIR");
   for (const key of required)
     if (!env[key]?.trim()) issues.push(`${key} is required.`);
   if (env.BACKEND_LOCAL !== "false")
     issues.push("BACKEND_LOCAL must be false.");
   if ((env.STORAGE_SIGNING_SECRET?.length || 0) < 32)
     issues.push("STORAGE_SIGNING_SECRET needs at least 32 characters.");
-  if (!env.BACKEND_DATA_DIR?.startsWith("/"))
+  if (!cloud && !env.BACKEND_DATA_DIR?.startsWith("/"))
     issues.push("BACKEND_DATA_DIR must be an absolute persistent directory.");
+  if (env.VERCEL && env.PERSISTENCE_DRIVER !== "cloudflare")
+    issues.push("Vercel requires PERSISTENCE_DRIVER=cloudflare.");
   for (const key of ["BACKEND_PUBLIC_URL", "NEXT_PUBLIC_SITE_URL"]) {
     try {
       const url = new URL(env[key] || "");

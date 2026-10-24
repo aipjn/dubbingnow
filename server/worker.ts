@@ -1,22 +1,27 @@
 import { setTimeout as delay } from "node:timers/promises";
 import { loadConfig } from "./config";
-import { Store } from "./store";
+import { createStore } from "./persistence";
 import { PrivateStorage } from "./storage";
 import { Processor } from "./processor";
 import { cleanup } from "./maintenance";
 import { randomUUID } from "node:crypto";
 async function main() {
   const config = loadConfig(),
-    store = new Store(config),
+    store = createStore(config),
     storage = new PrivateStorage(config, store),
     processor = new Processor(store, storage);
   const workerId = randomUUID();
-  store.workerBeat(workerId);
-  const heartbeat = setInterval(() => {
+  await store.workerBeat(workerId);
+  let heartbeatRunning = false;
+  const heartbeat = setInterval(async () => {
+    if (heartbeatRunning) return;
+    heartbeatRunning = true;
     try {
-      store.workerBeat(workerId);
+      await store.workerBeat(workerId);
     } catch {
       console.error("Worker heartbeat failed.");
+    } finally {
+      heartbeatRunning = false;
     }
   }, 5000);
   let stopping = false,
@@ -34,7 +39,7 @@ async function main() {
     while (!stopping) {
       try {
         if (Date.now() - lastCleanup > 60000) {
-          await cleanup(store);
+          await cleanup(store, storage);
           lastCleanup = Date.now();
         }
         if (!(await processor.runOnce())) await delay(1000);
@@ -47,8 +52,8 @@ async function main() {
     }
   } finally {
     clearInterval(heartbeat);
-    store.workerStopped(workerId);
-    store.close();
+    await store.workerStopped(workerId);
+    await store.close();
   }
 }
 void main().catch((error: unknown) => {

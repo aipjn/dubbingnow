@@ -49,7 +49,10 @@ export async function analyzeRecording(
   input: PipelineInput,
   signal: AbortSignal,
   metrics = new PipelineMetrics(),
-  stage: (status: JobStatus, progress: number) => void = () => {},
+  stage: (
+    status: JobStatus,
+    progress: number,
+  ) => void | Promise<void> = () => {},
   includeTranslation = false,
   onSegment?: TranslatedSegmentHandler,
 ) {
@@ -63,7 +66,7 @@ export async function analyzeRecording(
   const rejections: Record<string, number> = {};
   for (let start = 0; start < input.audioDuration; start += 120) {
     signal.throwIfAborted();
-    stage("transcribing", 5 + (30 * start) / input.audioDuration);
+    await stage("transcribing", 5 + (30 * start) / input.audioDuration);
     const duration = Math.min(120, input.audioDuration - start);
     const chunk = await metrics.measure("decode", () =>
       decodeChunk(
@@ -187,7 +190,10 @@ export async function dubRecording(
   input: PipelineInput,
   signal: AbortSignal,
   metrics = new PipelineMetrics(),
-  stage: (status: JobStatus, progress: number) => void = () => {},
+  stage: (
+    status: JobStatus,
+    progress: number,
+  ) => void | Promise<void> = () => {},
 ) {
   if (input.mode === "clone")
     requireValue(
@@ -337,7 +343,7 @@ export async function dubRecording(
     }
     const voiceKeys = new Map<number, string>();
     let translated: Segment[][] = [];
-    stage("translating", 35);
+    await stage("translating", 35);
     // Voice preparation and translation are independent; drain both on failure.
     await mapConcurrent(
       ["translation", "voice"] as const,
@@ -428,7 +434,7 @@ export async function dubRecording(
     );
     if (segments.length) metrics.mark("firstTranslatedSegment");
     let finished = 0;
-    stage("synthesizing", 50);
+    await stage("synthesizing", 50);
     const aligned = await mapConcurrent(
       segments,
       concurrency,
@@ -445,14 +451,14 @@ export async function dubRecording(
                 child,
               );
         finished++;
-        stage("synthesizing", 50 + (40 * finished) / segments.length);
+        await stage("synthesizing", 50 + (40 * finished) / segments.length);
         return result;
       },
     );
     const output = path.join(input.dir, "result.wav"),
       writer = new AudioWriter(output, input.duration);
     try {
-      stage("aligning", 90);
+      await stage("aligning", 90);
       await metrics.measure("write", async () => {
         await writer.init();
         for (const item of aligned)

@@ -6,6 +6,7 @@ import type { ServerConfig } from "../config";
 import { BackendError, requireValue } from "../errors";
 import { GoogleProvider, type VoicePresentation } from "./google";
 import type { VoiceTier } from "../../lib/api/types";
+import { VoiceRecords } from "../cloudflare/voice-records";
 
 interface Model {
   _id: string;
@@ -31,12 +32,20 @@ const idPattern = /^[a-zA-Z0-9_-]{1,128}$/;
 /** One durable voice per workspace. No delete/update or inline-clone path is provided. */
 export class FishVoice {
   private filename: string;
+  private cloud?: VoiceRecords;
+  private recordId: string;
   constructor(
     readonly config: ServerConfig,
     private fetcher: typeof fetch = fetch,
     private observe?: Observe,
     private scope?: string,
+    voiceRecords?: VoiceRecords,
   ) {
+    this.recordId = scope
+      ? createHash("sha256").update(scope).digest("hex")
+      : "saved-test";
+    if (config.persistence === "cloudflare")
+      this.cloud = voiceRecords || new VoiceRecords(config);
     this.filename = path.join(
       config.dataDir,
       scope
@@ -108,9 +117,10 @@ export class FishVoice {
   }
   private async record(): Promise<VoiceRecord | undefined> {
     try {
-      const record = JSON.parse(
-        await readFile(this.filename, "utf8"),
-      ) as VoiceRecord;
+      const record = this.cloud
+        ? await this.cloud.get<VoiceRecord>(this.recordId)
+        : (JSON.parse(await readFile(this.filename, "utf8")) as VoiceRecord);
+      if (!record) return undefined;
       requireValue(
         record.version === 1 &&
           ["creating", "registered"].includes(record.state) &&
@@ -132,6 +142,10 @@ export class FishVoice {
     }
   }
   private async save(record: VoiceRecord) {
+    if (this.cloud) {
+      await this.cloud.save(this.recordId, record);
+      return;
+    }
     await mkdir(this.config.dataDir, { recursive: true, mode: 0o700 });
     const temporary = this.filename + "." + randomUUID() + ".tmp";
     const file = await open(temporary, "wx", 0o600);
@@ -249,6 +263,28 @@ export class FishVoice {
       "Voice creation is not enabled for this service. No new voice was created.",
       503,
     );
+    if (this.cloud) {
+      const record: VoiceRecord = {
+        version: 1,
+        state: "creating",
+        title: `DubbingNow ${this.scope ? "private" : "test"} ${randomUUID()}`,
+        createdAt: new Date().toISOString(),
+      };
+      // Claim the creation intent in D1 before calling Fish; a crashed or timed-out
+      // process cannot create a second voice from another server instance.
+      if (!(await this.cloud.create(this.recordId, record))) {
+        const voice = await this.existing(signal);
+        requireValue(
+          voice,
+          "SERVICE_UNAVAILABLE",
+          "This voice is already being created. Retry later; no extra voice was created.",
+          503,
+          true,
+        );
+        return voice;
+      }
+      return this.create(record, reference, text, signal);
+    }
     await mkdir(this.config.dataDir, { recursive: true, mode: 0o700 });
     const lock = this.filename + ".lock";
     let handle: Awaited<ReturnType<typeof open>>;
@@ -280,38 +316,46 @@ export class FishVoice {
       };
       // Durable intent BEFORE the only POST. Timeouts, crashes and errors never trigger a repeat POST.
       await this.save(record);
-      const body = new FormData();
-      body.set("type", "tts");
-      body.set("title", record.title);
-      body.set("train_mode", "fast");
-      body.set("visibility", "private");
-      body.set("enhance_audio_quality", "false");
-      body.set("generate_sample", "false");
-      body.append(
-        "voices",
-        new Blob([new Uint8Array(reference)], { type: "audio/wav" }),
-        "reference.wav",
-      );
-      if (text) body.append("texts", text);
-      const response = await this.request(
-        "model",
-        { method: "POST", body },
-        signal,
-        true,
-      );
-      const model = (await response.json()) as Model;
-      requireValue(
-        typeof model._id === "string" && idPattern.test(model._id),
-        "PROCESSING_FAILED",
-        "Fish returned no voice ID. The creation record was retained; no automatic recreation will occur.",
-        502,
-      );
-      await this.save({ ...record, state: "registered", modelId: model._id });
-      return this.ready(model._id, signal);
+      return await this.create(record, reference, text, signal);
     } finally {
       await handle.close();
       await rm(lock, { force: true });
     }
+  }
+  private async create(
+    record: VoiceRecord,
+    reference: Buffer,
+    text: string | undefined,
+    signal: AbortSignal,
+  ) {
+    const body = new FormData();
+    body.set("type", "tts");
+    body.set("title", record.title);
+    body.set("train_mode", "fast");
+    body.set("visibility", "private");
+    body.set("enhance_audio_quality", "false");
+    body.set("generate_sample", "false");
+    body.append(
+      "voices",
+      new Blob([new Uint8Array(reference)], { type: "audio/wav" }),
+      "reference.wav",
+    );
+    if (text) body.append("texts", text);
+    const response = await this.request(
+      "model",
+      { method: "POST", body },
+      signal,
+      true,
+    );
+    const model = (await response.json()) as Model;
+    requireValue(
+      typeof model._id === "string" && idPattern.test(model._id),
+      "PROCESSING_FAILED",
+      "Fish returned no voice ID. The creation record was retained; no automatic recreation will occur.",
+      502,
+    );
+    await this.save({ ...record, state: "registered", modelId: model._id });
+    return this.ready(model._id, signal);
   }
   async speak(text: string, voice: string, signal: AbortSignal) {
     requireValue(

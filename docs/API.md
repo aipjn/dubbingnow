@@ -133,3 +133,7 @@ API全部 no-store，TLS，CORS 仅允许本站 origins、Authorization/Content-
 默认 `CLONE_PROVIDER=fish`。`GET /capabilities` 返回 `voiceCloning: {provider: "fish", requiresConsentRecording: false, singleVoiceTest: true}`。此时 clone 请求只需原有字段和 `voiceMode: "clone"`，省略 `consentUploads`，不能附带 Google 授权上传。旧请求省略 mode 仍使用 preset。Google 的额外录音规则仅在配置 `CLONE_PROVIDER=google` 时生效。
 
 首个单人素材选取参考并注册唯一 Fish 音色，后续 clone 任务固定复用保存的 ID，包括换素材、刷新、取消及失败重试。已有保存音色时无需新素材具备 10 秒参考；多说话人任务在测试模式下明确失败退款。所有 Fish 克隆创建只能经过 `.data/fish-test-voice.json` 的持久创建记录和文件锁，不提供自动删除、换音色或重复创建路径。创建请求响应丢失时以唯一标题核对远端，不盲目重试。详见 [FISH_TESTING.md](./FISH_TESTING.md)。
+
+## Cloudflare 传输
+
+Cloudflare 模式下上传票据的 URL 指向私有 R2，必须原样发送所有 `headers`，包含 `If-None-Match: *`。签名绑定内容类型和长度，已上传对象不能覆盖。完成接口仍负责 SHA-256、格式与时长校验。结果文件接口可能返回 307 至短时 R2 签名地址；客户端应正常跟随跳转。业务 API 路径和 JSON 契约保持兼容。

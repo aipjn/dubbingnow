@@ -2,27 +2,24 @@
 
 已确认的网站域名为 `dubbingnow.com`，GitHub 仓库为 `https://github.com/aipjn/dubbingnow`，目标托管平台为 Vercel。
 
-当前代码可以提交 GitHub，但后端还不能直接作为普通 Vercel Functions 上线。通过网页构建不等于配音服务可以正常工作。
+持久存储已实现 Cloudflare D1 + 私有 R2，详见 [Cloudflare 接入说明](CLOUDFLARE_STORAGE.md)。后台任务仍需要 Node/FFmpeg 执行环境，通过网页构建不等于配音服务已经上线。
 
 ## 当前部署边界
 
-| 部分                           | 当前实现                   | Vercel 上的处理                                  |
-| ------------------------------ | -------------------------- | ------------------------------------------------ |
-| 网页、SEO、浏览器音视频处理    | Next.js 与浏览器 worker    | 可以部署                                         |
-| 用户、积分、任务队列、音色记录 | 本地 SQLite                | 必须迁移到可共享的持久数据库，或保留在持久服务器 |
-| 源音频与配音结果               | 本地私有文件及签名下载     | 必须迁移到私有对象存储，或由持久后端直接传输     |
-| 配音任务                       | 独立 Node worker 与 FFmpeg | 需要后台任务运行环境；不能只启动 Next 页面服务   |
+| 部分                           | 当前实现                   | Vercel 上的处理                                |
+| ------------------------------ | -------------------------- | ---------------------------------------------- |
+| 网页、SEO、浏览器音视频处理    | Next.js 与浏览器 worker    | 可以部署                                       |
+| 用户、积分、任务队列、音色记录 | Cloudflare D1（已实现）    | 配置服务凭据并初始化数据库                     |
+| 源音频与配音结果               | 私有 R2（已实现）          | 配置对象读写凭据、CORS，浏览器直传             |
+| 配音任务                       | 独立 Node worker 与 FFmpeg | 需要后台任务运行环境；不能只启动 Next 页面服务 |
 
-Vercel Functions 的本地存储是临时的，实例之间不共享 SQLite 文件。普通函数的请求/响应体上限为 4.5 MB，与当前最高 100 MB 的签名上传路径不兼容，不能简单把上传地址改成本站函数。
+Vercel Functions 的本地存储是临时的。本次 Cloudflare 模式只把 FFmpeg 的可丢弃工作文件放在临时目录，数据库、音色记录和结果均不依赖它。音频上传直接到 R2，结果下载从 API 验权后跳转到 R2，避开普通函数 4.5 MB 请求/响应体限制。
 
-Vercel 目前提供 Daemons 公测，可以运行后台容器，但其存储仍为临时存储，不能直接解决 API/worker 共享 SQLite 和媒体文件的问题。即使使用 Daemons，也需要改造数据库、对象存储及任务领取方式。
+## 剩余部署工作
 
-## 可选实现路径
+当前选定 D1 + R2 路径，保留 Google + Fish。资源已创建，R2 按用户确认的按量计费订阅开通。代码适配与 R2 CORS 已完成；还需要配置服务凭据、初始化 D1，并进行真实云端验收。
 
-1. 保留当前后端：Vercel 承载 `dubbingnow.com` 网页，另用持久服务器承载 API、SQLite、文件与 worker。前端设置 `NEXT_PUBLIC_API_BASE_URL=https://api.dubbingnow.com`；后端允许 `https://dubbingnow.com`，文件直接传输到后端。`api.dubbingnow.com` 是建议的地址，尚未创建或验证。现有 [单机部署文档](PRODUCTION_DEPLOYMENT.md) 适用于后端。
-2. 适配 Vercel：将 SQLite 改成云数据库，媒体迁移至私有对象存储及浏览器直传，把 worker 接入可持久重试的任务运行方式，并打包 FFmpeg。必须保留积分原子结算、任务幂等、租约恢复、音色隔离和单席位测试保护；不能用临时 SQLite 或进程内定时器代替。
-
-这两条路径都保留 Google + Fish。当前没有替用户购买或创建额外付费服务，也没有完成这两条路径的公网部署。
+网页/API 可以部署到 Vercel；配音仍由独立 Node worker 执行。需要选择并配置能运行 Node/FFmpeg 的后台环境，使用相同的 Cloudflare 与供应商环境变量。Vercel Daemons、Container Functions 或 Sandbox 等能力须在实际账号与项目中单独验证，当前没有部署或声称已跑通本项目。不能只启动 Next 服务并假设 worker 会自动运行，也不能依赖浏览器页面维持任务。
 
 如先验证界面，可以在单独的 Vercel Preview 明确设置 `NEXT_PUBLIC_API_BASE_URL=` 使用演示模式；它只返回样例结果，不能作为真实配音上线验收。正式公开配置必须在构建前填写，Auth0/Turnstile 也需绑定实际域名。
 

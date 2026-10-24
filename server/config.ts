@@ -1,7 +1,15 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { randomBytes } from "node:crypto";
 import path from "node:path";
+import { tmpdir } from "node:os";
 export interface ServerConfig {
+  persistence?: "local" | "cloudflare";
+  cloudflareAccountId?: string;
+  d1DatabaseId?: string;
+  d1ApiToken?: string;
+  r2Bucket?: string;
+  r2AccessKeyId?: string;
+  r2SecretAccessKey?: string;
   dataDir: string;
   origin: string;
   signingSecret: string;
@@ -55,13 +63,26 @@ function positiveEnv(
   return value;
 }
 export function loadConfig(): ServerConfig {
+  const persistence =
+    process.env.PERSISTENCE_DRIVER ||
+    (process.env.BACKEND_LOCAL === "true" ? "local" : "cloudflare");
+  if (!["local", "cloudflare"].includes(persistence))
+    throw new Error("Invalid PERSISTENCE_DRIVER.");
+  if (process.env.VERCEL && persistence !== "cloudflare")
+    throw new Error("Vercel requires Cloudflare persistence.");
   // Runtime storage is mounted separately; do not include private data in build tracing.
   const dataDir = path.resolve(
-    /* turbopackIgnore: true */ process.env.BACKEND_DATA_DIR || ".data",
+    /* turbopackIgnore: true */ persistence === "cloudflare"
+      ? process.env.BACKEND_TEMP_DIR || path.join(tmpdir(), "dubbingnow")
+      : process.env.BACKEND_DATA_DIR || ".data",
   );
   mkdirSync(dataDir, { recursive: true, mode: 0o700 });
   let signingSecret = process.env.STORAGE_SIGNING_SECRET || "";
   if (!signingSecret) {
+    if (persistence === "cloudflare")
+      throw new Error(
+        "Cloud persistence requires a shared STORAGE_SIGNING_SECRET.",
+      );
     if (
       process.env.NODE_ENV === "production" &&
       process.env.BACKEND_LOCAL !== "true"
@@ -110,6 +131,13 @@ export function loadConfig(): ServerConfig {
   if (!["saved_test", "per_job"].includes(fishVoiceMode))
     throw new Error("FISH_VOICE_MODE must be saved_test or per_job.");
   return {
+    persistence: persistence as "local" | "cloudflare",
+    cloudflareAccountId: process.env.CLOUDFLARE_ACCOUNT_ID || "",
+    d1DatabaseId: process.env.CLOUDFLARE_D1_DATABASE_ID || "",
+    d1ApiToken: process.env.CLOUDFLARE_D1_API_TOKEN || "",
+    r2Bucket: process.env.CLOUDFLARE_R2_BUCKET || "dubbingnow-audio",
+    r2AccessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || "",
+    r2SecretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || "",
     dataDir,
     origin,
     signingSecret,
@@ -164,7 +192,10 @@ export function loadConfig(): ServerConfig {
     requireWorker:
       process.env.NODE_ENV === "production" &&
       process.env.BACKEND_LOCAL !== "true",
-    minFreeDiskBytes: positiveEnv("MIN_FREE_DISK_BYTES", 500_000_000),
+    minFreeDiskBytes: positiveEnv(
+      "MIN_FREE_DISK_BYTES",
+      persistence === "cloudflare" ? 250_000_000 : 500_000_000,
+    ),
     maxSpeakers: positiveEnv("MAX_SPEAKERS", 1, 8),
     globalDailyUploadBytes: positiveEnv(
       "GLOBAL_DAILY_UPLOAD_BYTES",

@@ -2,6 +2,10 @@ import { loadConfig } from "../config";
 import { createBackup, restoreBackup } from "../backups";
 async function main() {
   const [command, source, destination] = process.argv.slice(2);
+  if (loadConfig().persistence === "cloudflare")
+    throw new Error(
+      "Cloud mode uses D1 Time Travel/export and private R2 storage. This command only backs up local development SQLite.",
+    );
   if (command === "create" && source)
     console.log(await createBackup(loadConfig().dataDir, source));
   else if (command === "restore" && source && destination) {
