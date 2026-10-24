@@ -36,7 +36,7 @@ export interface ServerConfig {
   fishKey?: string;
   fishModel?: string;
   fishVoiceId?: string;
-  fishVoiceMode?: "saved_test" | "per_job";
+  fishVoiceMode?: "inline" | "saved_test" | "per_job";
   fishAllowVoiceCreation?: boolean;
   maxDurationSeconds?: number;
   signupCreditsCap?: number;
@@ -127,9 +127,9 @@ export function loadConfig(): ServerConfig {
   const cloneProvider = process.env.CLONE_PROVIDER || "fish";
   if (!["google", "fish"].includes(cloneProvider))
     throw new Error("CLONE_PROVIDER must be google or fish.");
-  const fishVoiceMode = process.env.FISH_VOICE_MODE || "saved_test";
-  if (!["saved_test", "per_job"].includes(fishVoiceMode))
-    throw new Error("FISH_VOICE_MODE must be saved_test or per_job.");
+  const fishVoiceMode = process.env.FISH_VOICE_MODE || "inline";
+  if (!["inline", "saved_test", "per_job"].includes(fishVoiceMode))
+    throw new Error("FISH_VOICE_MODE must be inline, saved_test or per_job.");
   return {
     persistence: persistence as "local" | "cloudflare",
     cloudflareAccountId: process.env.CLOUDFLARE_ACCOUNT_ID || "",
@@ -178,7 +178,7 @@ export function loadConfig(): ServerConfig {
     fishKey: process.env.FISH_API_KEY || "",
     fishModel: process.env.FISH_TTS_MODEL || "s2.1-pro-free",
     fishVoiceId: process.env.FISH_REFERENCE_ID || "",
-    fishVoiceMode: fishVoiceMode as "saved_test" | "per_job",
+    fishVoiceMode: fishVoiceMode as "inline" | "saved_test" | "per_job",
     fishAllowVoiceCreation: process.env.FISH_ALLOW_VOICE_CREATION === "true",
     maxDurationSeconds: positiveEnv("MAX_DURATION_SECONDS", 300, 7200),
     signupCreditsCap: positiveEnv("SIGNUP_CREDITS_CAP", 50),

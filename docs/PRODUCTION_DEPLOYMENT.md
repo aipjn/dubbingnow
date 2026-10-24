@@ -8,7 +8,7 @@
 - Auth0 自定义 API audience、正式回调 `/auth/callback`、退出地址、允许的网页 origin；domain/client ID 与前端 audience 配套，开启邮箱验证。
 - 正式域名的 Turnstile site key 与 secret。
 - 对外支持邮箱与运营主体名称（页面通过 `NEXT_PUBLIC_SUPPORT_EMAIL` / `NEXT_PUBLIC_OPERATOR_NAME` 使用）。
-- Fish 正式克隆容量与账户余额。生产按用户、任务、说话人隔离音色，不使用当前全局测试音色；`FISH_ALLOW_VOICE_CREATION=false` 是默认防误用开关。只有准备好容量才开启，不要通过给正式路径指定测试 `FISH_REFERENCE_ID` 绕过隔离。当前单席位测试继续用 `saved_test`，无需改本机 `.env.local`。
+- Fish 合成账户余额与模型使用权限。正式默认 `inline` 直接发送当前任务的参考音，不需要创建声音模型；单音色注册席位不再是该路径的前置条件。显式 `saved_test` 仅供旧测试声音复用；旧 `per_job` 注册模式仍需要独立容量及 `FISH_ALLOW_VOICE_CREATION=true`。
 
 `deploy/production.env.example` 是待填写模板，不是可以直接发布的配置。模板的 `s2.1-pro` 是付费生产档，不会修改本地正在使用的免费模型；正式费用/权限须另行验收。代码不自动切换或购买供应商套餐。
 

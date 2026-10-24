@@ -141,11 +141,11 @@ NEXT_PUBLIC_AUTH0_AUDIENCE=https://api.dubbingnow.test npm run build
 生产部署流程与仍需外部资料的验收见 [PRODUCTION_DEPLOYMENT.md](docs/PRODUCTION_DEPLOYMENT.md)。现有 Google + Fish 与本地单席位音色保留。
 
 - 完成的音频刷新后可恢复，账户任务历史支持再次打开、签名刷新与过期结果提示。
-- 正式音色路径采用 `FISH_VOICE_MODE=per_job`，按用户/任务/说话人隔离，绝不采用全局测试音色；必须明确开启创建开关。当前 `.env.local` 仍沿用 `saved_test`，不会因代码更新创建新音色。
+- 正式克隆默认 `FISH_VOICE_MODE=inline`：从本次上传选取参考人声，通过 MessagePack 随合成请求发送，不使用固定音色 ID，不注册持久声音模型。`saved_test` 仅供显式复用原测试音色；旧的 `per_job` 注册模式仍须准备模型容量并开启创建。
 - 默认限制 300 秒、100 MB、1 人；赠额上限 50。每日音频尝试量、上传量、队列上限、排队与运行超时均可配置。取消/失败退积分但不退每日尝试预算。
 - `/v1/ready` 检查必要的 worker 心跳与磁盘；worker 离线时生产环境拒绝新任务。API 读取和维护也会结算过期任务，不依赖 worker 重启才退款。
 - `npm run preflight` 检查生产配置；构建后用 `npm run preflight -- --require-build` 核对公开配置与前端产物，API 服务启动时也执行此检查，避免部署演示产物或旧登录配置。`npm run monitor` 输出健康/失败率检查，异常退出非零。
 - `npm run backup -- create <backup-root>` 在线备份；`npm run backup -- restore <snapshot> <new-directory>` 校验并恢复到新目录，不覆盖已有数据。
 - `deploy/` 提供 systemd API/worker/监控/每日备份与 nginx 模板；`.github/workflows/ci.yml` 提供自动验证。模板尚未安装到服务器。
 
-正式 Auth0 audience、域名/TLS、支持邮箱/主体名称、Fish 生产容量及真实设备/自然人声验收仍需补齐。支付继续禁用。
+正式 Auth0 登录配置、域名/TLS、支持邮箱/主体名称及真实设备/自然人声验收仍需补齐。支付继续禁用。当前功能进展见 [FUNCTIONAL_STATUS.md](docs/FUNCTIONAL_STATUS.md)，不能把存储接入通过当成登录注册或整站上线完成。

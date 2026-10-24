@@ -126,9 +126,17 @@ export function productionProblems(
       `https://${env.NEXT_PUBLIC_AUTH0_DOMAIN}`
   )
     issues.push("Public Auth0 domain and server issuer must match.");
-  if (env.FISH_VOICE_MODE !== "per_job")
-    issues.push("Production cloning requires FISH_VOICE_MODE=per_job.");
-  if (env.FISH_ALLOW_VOICE_CREATION !== "true")
+  if (
+    env.FISH_VOICE_MODE &&
+    !["inline", "per_job"].includes(env.FISH_VOICE_MODE)
+  )
+    issues.push(
+      "Production cloning requires FISH_VOICE_MODE=inline or per_job.",
+    );
+  if (
+    env.FISH_VOICE_MODE === "per_job" &&
+    env.FISH_ALLOW_VOICE_CREATION !== "true"
+  )
     issues.push(
       "Production clone creation is disabled; enable only after capacity is available.",
     );

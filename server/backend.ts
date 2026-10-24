@@ -46,7 +46,7 @@ export class Backend {
           (!!config.fishKey &&
             (config.fishVoiceMode !== "per_job" ||
               config.fishAllowVoiceCreation === true) &&
-            (!config.requireWorker || config.fishVoiceMode === "per_job"))));
+            (!config.requireWorker || config.fishVoiceMode !== "saved_test"))));
   }
   private async actor(request: Request): Promise<Actor> {
     const header = request.headers.get("authorization");
@@ -262,12 +262,13 @@ export class Backend {
             (!!this.config.fishKey &&
               (this.config.fishVoiceMode === "per_job"
                 ? this.config.fishAllowVoiceCreation === true
-                : !this.config.requireWorker)),
+                : this.config.fishVoiceMode !== "saved_test" ||
+                  !this.config.requireWorker)),
           provider: this.config.cloneProvider || "google",
           requiresConsentRecording: this.config.cloneProvider !== "fish",
           singleVoiceTest:
             this.config.cloneProvider === "fish" &&
-            this.config.fishVoiceMode !== "per_job",
+            this.config.fishVoiceMode === "saved_test",
         },
       });
     if (path === "billing/policy" && method === "GET")

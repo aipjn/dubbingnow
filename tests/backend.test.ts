@@ -176,6 +176,7 @@ test("Fish clone jobs need only the source upload and reuse the fixed voice acro
     f.c.googleKey = "test-only-google-key";
     f.c.fishKey = "test-fish-key";
     f.c.fishVoiceId = "fixed-test-voice";
+    f.c.fishVoiceMode = "saved_test";
     const requests: string[] = [];
     const provider = new FishDubbingProvider(f.c, async (url, init) => {
       const endpoint = new URL(String(url)).pathname;

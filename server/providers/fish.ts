@@ -7,6 +7,7 @@ import { BackendError, requireValue } from "../errors";
 import { GoogleProvider, type VoicePresentation } from "./google";
 import type { VoiceTier } from "../../lib/api/types";
 import { VoiceRecords } from "../cloudflare/voice-records";
+import { encode } from "@msgpack/msgpack";
 
 interface Model {
   _id: string;
@@ -29,7 +30,7 @@ type Observe = (request: {
 }) => void;
 const idPattern = /^[a-zA-Z0-9_-]{1,128}$/;
 
-/** One durable voice per workspace. No delete/update or inline-clone path is provided. */
+/** Saved-model operations remain separate from task-specific inline synthesis. */
 export class FishVoice {
   private filename: string;
   private cloud?: VoiceRecords;
@@ -89,7 +90,7 @@ export class FishVoice {
           "PROCESSING_FAILED",
           creation
             ? "Fish voice creation did not complete. Check the saved voice before trying again; no second clone will be created automatically."
-            : `Fish Audio request failed (HTTP ${status}). The saved test voice will be kept.`,
+            : `Speech synthesis failed (HTTP ${status}). Your reservation will be returned.`,
           502,
           status === 429 || status >= 500,
         );
@@ -102,7 +103,7 @@ export class FishVoice {
         "PROCESSING_FAILED",
         creation
           ? "Fish voice creation was interrupted. Its saved creation record will be checked before any further attempt."
-          : "Fish Audio could not be reached. The saved test voice will be kept.",
+          : "The speech synthesis service could not be reached. Please try again.",
         502,
         true,
       );
@@ -384,7 +385,46 @@ export class FishVoice {
       },
       signal,
     );
-    const reader = response.body!.getReader();
+    return this.audio(response);
+  }
+  async speakReference(
+    text: string,
+    reference: { audio: Buffer; text: string },
+    signal: AbortSignal,
+  ) {
+    const body = encode({
+      text,
+      references: [
+        { audio: new Uint8Array(reference.audio), text: reference.text },
+      ],
+      format: "wav",
+      sample_rate: 24000,
+      latency: "normal",
+      temperature: 0.5,
+      top_p: 0.7,
+    });
+    const response = await this.request(
+      "v1/tts",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/msgpack",
+          model: this.config.fishModel || "s2.1-pro-free",
+        },
+        body: new Uint8Array(body),
+      },
+      signal,
+    );
+    return this.audio(response);
+  }
+  private async audio(response: Response) {
+    requireValue(
+      response.body,
+      "PROCESSING_FAILED",
+      "Fish returned no audio.",
+      502,
+    );
+    const reader = response.body.getReader();
     const chunks: Uint8Array[] = [];
     let size = 0;
     try {
@@ -410,7 +450,7 @@ export class FishVoice {
         wav.toString("ascii", 0, 4) === "RIFF" &&
         wav.toString("ascii", 8, 12) === "WAVE",
       "PROCESSING_FAILED",
-      "Fish returned invalid WAV audio. The saved voice will be kept.",
+      "The speech service returned invalid audio.",
       502,
     );
     return wav;
@@ -425,6 +465,8 @@ export class FishDubbingProvider extends GoogleProvider {
   private fetcherForVoice: typeof fetch;
   private observeVoice?: Observe;
   private scope?: { owner: string; jobId: string };
+  // Per-task references never enter a global voice record or the client response.
+  private references = new Map<string, { audio: Buffer; text: string }>();
   constructor(
     config: ServerConfig,
     fetcher: typeof fetch = fetch,
@@ -435,9 +477,9 @@ export class FishDubbingProvider extends GoogleProvider {
     this.fish = new FishVoice(config, fetcher, observe);
     this.fetcherForVoice = fetcher;
     this.observeVoice = observe;
-    this.singleVoiceTest = config.fishVoiceMode !== "per_job";
+    this.singleVoiceTest = config.fishVoiceMode === "saved_test";
     this.scope = scope;
-    if (!this.singleVoiceTest)
+    if (config.fishVoiceMode === "per_job")
       requireValue(
         scope?.owner && scope?.jobId,
         "SERVICE_UNAVAILABLE",
@@ -463,6 +505,22 @@ export class FishDubbingProvider extends GoogleProvider {
       "INVALID_REQUEST",
       "Invalid speaker.",
     );
+    if (this.config.fishVoiceMode !== "per_job") {
+      requireValue(
+        reference.length > 44 &&
+          reference.length <= 2_000_000 &&
+          referenceText?.trim(),
+        "PROCESSING_FAILED",
+        "The selected voice reference needs audio and its original transcript.",
+        422,
+      );
+      const key = `inline-${randomUUID()}`;
+      this.references.set(key, {
+        audio: Buffer.from(reference),
+        text: referenceText!,
+      });
+      return Promise.resolve(key);
+    }
     const scope = `${this.scope!.owner}:${this.scope!.jobId}:${speaker}`;
     return new FishVoice(
       this.config,
@@ -483,9 +541,19 @@ export class FishDubbingProvider extends GoogleProvider {
     requireValue(
       voice,
       "PROCESSING_FAILED",
-      "The saved Fish test voice is required for cloning.",
+      "The task's cloned voice is required for synthesis.",
       502,
     );
+    if (!this.singleVoiceTest && this.config.fishVoiceMode !== "per_job") {
+      const reference = this.references.get(voice);
+      requireValue(
+        reference,
+        "PROCESSING_FAILED",
+        "The task's voice reference is unavailable.",
+        502,
+      );
+      return this.fish.speakReference(text, reference, signal);
+    }
     return this.fish.speak(text, voice, signal);
   }
 }

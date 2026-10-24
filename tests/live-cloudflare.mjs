@@ -1,6 +1,6 @@
-// Real Cloudflare storage smoke test. No Google/Fish requests or voice creation.
+// Real Cloudflare smoke test. --providers opts into paid Google/Fish calls, never saved-model creation.
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, rm, writeFile, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { randomUUID, createHash } from "node:crypto";
@@ -9,22 +9,34 @@ import { CloudflareStore } from "../server/cloudflare-store.ts";
 import { PrivateStorage } from "../server/storage.ts";
 import { Processor } from "../server/processor.ts";
 import { Backend } from "../server/backend.ts";
-import { wavHeader } from "../server/media.ts";
+import { wavHeader, probe } from "../server/media.ts";
+import { FishVoice } from "../server/providers/fish.ts";
 
 const loaded = loadConfig();
+const liveProviders = process.argv.includes("--providers");
 assert.equal(
   loaded.persistence,
   "cloudflare",
   "Set PERSISTENCE_DRIVER=cloudflare",
 );
 const dir = await mkdtemp(path.join(tmpdir(), "dubbing-cloud-smoke-"));
-const config = { ...loaded, dataDir: dir, requireWorker: false };
+const config = {
+  ...loaded,
+  dataDir: dir,
+  requireWorker: false,
+  ...(liveProviders
+    ? { fishVoiceMode: "inline", fishAllowVoiceCreation: false }
+    : {}),
+};
 const store = new CloudflareStore(config),
   storage = new PrivateStorage(config, store);
 const marker = "smoke-" + randomUUID(),
   started = performance.now();
 let actor, uploadId, resultKey, jobId;
+const voiceInventory = liveProviders ? new FishVoice(config) : undefined;
+let voicesBefore;
 try {
+  voicesBefore = await voiceInventory?.models(AbortSignal.timeout(120000));
   // Verify real REST batch rollback rather than assuming multi-query atomicity.
   await assert.rejects(
     store.db.batch([
@@ -55,7 +67,9 @@ try {
       Math.round(Math.sin((i * 2 * Math.PI * 220) / 24000) * 4000),
       i * 2,
     );
-  const wav = Buffer.concat([wavHeader(24000), pcm]),
+  const wav = liveProviders
+      ? await readFile(".runtime/fish/test-reference.wav")
+      : Buffer.concat([wavHeader(24000), pcm]),
     input = {
       filename: "storage-smoke.wav",
       contentType: "audio/wav",
@@ -86,7 +100,7 @@ try {
     uploadId: row.id,
     sourceLanguage: "en",
     targetLanguage: "es",
-    voiceMode: "preset",
+    voiceMode: liveProviders ? "clone" : "preset",
     voiceTier: "standard",
   };
   const quote = await store.quote(actor, request),
@@ -102,14 +116,20 @@ try {
   ]);
   assert.equal(a.id, b.id);
   jobId = a.id;
-  const processor = new Processor(store, storage, {
-    transcribe: async () => ({
-      language: "en",
-      segments: [{ start: 0, end: 1, speaker: 0, text: "Hello" }],
-    }),
-    translate: async (rows) => rows.map((r) => ({ ...r, text: "Hola" })),
-    speak: async () => wav,
-  });
+  const processor = new Processor(
+    store,
+    storage,
+    liveProviders
+      ? undefined
+      : {
+          transcribe: async () => ({
+            language: "en",
+            segments: [{ start: 0, end: 1, speaker: 0, text: "Hello" }],
+          }),
+          translate: async (rows) => rows.map((r) => ({ ...r, text: "Hola" })),
+          speak: async () => wav,
+        },
+  );
   await processor.runOnce();
   const job = await store.job(actor, a.id);
   assert.equal(job.status, "completed");
@@ -135,22 +155,62 @@ try {
   assert.equal(response.status, 307);
   const media = await fetch(response.headers.get("location"));
   assert.equal(media.status, 200);
-  assert.ok((await media.arrayBuffer()).byteLength >= wav.length);
+  const downloaded = Buffer.from(await media.arrayBuffer());
+  assert.equal(downloaded.toString("ascii", 0, 4), "RIFF");
+  const downloadedFile = path.join(dir, "downloaded.wav");
+  await writeFile(downloadedFile, downloaded);
+  const output = await probe(
+    config,
+    downloadedFile,
+    AbortSignal.timeout(10000),
+  );
+  assert.ok(Math.abs(output.duration - job.duration) < 0.1);
+  const metricsRow = await store.get(
+    "SELECT record FROM pipeline_metrics WHERE job_id=?",
+    a.id,
+  );
+  const pipelineTimings = metricsRow
+    ? JSON.parse(metricsRow.record).timings
+    : undefined;
+  const voicesAfter = await voiceInventory?.models(AbortSignal.timeout(120000));
+  if (liveProviders) {
+    assert.deepEqual(
+      voicesAfter.map((v) => v._id).sort(),
+      voicesBefore.map((v) => v._id).sort(),
+    );
+    await writeFile(".runtime/cloudflare/inline-dubbed-es.wav", downloaded, {
+      mode: 0o600,
+    });
+  }
   const report = {
     ok: true,
-    test: "real D1 + R2 + FFmpeg; synthetic provider",
+    test: liveProviders
+      ? "real D1 + R2 + FFmpeg + Google + Fish inline clone; fixture identity"
+      : "real D1 + R2 + FFmpeg; synthetic provider",
     durationMs: Math.round(performance.now() - started),
     atomicBatchRollback: true,
     concurrentRequestDeduplication: true,
     immutableSignedUpload: true,
     temporaryDirectoryErased: true,
     resultDownloaded: true,
-    googleFishRequests: 0,
+    sourceSeconds: job.duration,
+    outputSeconds: output.duration,
+    ...(liveProviders
+      ? {
+          voiceCountBefore: voicesBefore.length,
+          voiceCountAfter: voicesAfter.length,
+          voiceMode: "inline",
+          pipelineTimings,
+          identity: "fixture; real Auth0 not covered",
+        }
+      : { googleFishRequests: 0 }),
     newVoices: 0,
   };
   await mkdir(".runtime/cloudflare", { recursive: true });
   await writeFile(
-    ".runtime/cloudflare/live-smoke.json",
+    liveProviders
+      ? ".runtime/cloudflare/live-provider-smoke.json"
+      : ".runtime/cloudflare/live-smoke.json",
     JSON.stringify(report, null, 2) + "\n",
     { mode: 0o600 },
   );

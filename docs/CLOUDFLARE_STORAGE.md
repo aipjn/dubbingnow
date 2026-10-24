@@ -30,7 +30,7 @@ npm run worker
 
 R2 CORS 允许项目域名及本机调试地址，方法 `GET, HEAD, PUT`，请求头 `Content-Type, Content-Length, If-None-Match, Range`，暴露 `ETag, Content-Length, Content-Range`。实际控制台已保存这一规则。临时 Preview 域名需逐个加入允许列表，不使用 `*`。
 
-`BACKEND_TEMP_DIR` 可覆盖临时目录。Cloudflare 模式下忽略 `BACKEND_DATA_DIR`，不会自动创建或读取 `dubbing.sqlite`、本地音色记录或持久结果文件。测试所用唯一 Fish 模型仍通过 `FISH_REFERENCE_ID` 复用；没有设置时会查询并复用账号唯一已有声音，再把记录保存到 D1。生产仍需独立音色容量和 `per_job` 模式，禁止把测试声音共享给正式用户。
+`BACKEND_TEMP_DIR` 可覆盖临时目录。Cloudflare 模式下忽略 `BACKEND_DATA_DIR`，不会自动创建或读取 `dubbing.sqlite`、本地音色记录或持久结果文件。正式克隆默认 `FISH_VOICE_MODE=inline`，参考音只随当前任务的合成请求发送，不采用任何已保存模型 ID，也不创建持久音色。显式 `saved_test` 模式才复用原有测试声音；旧 `per_job` 模式的创建记录和模型 ID 仍保存在 D1。
 
 ## 上传、处理与下载
 
@@ -52,6 +52,8 @@ D1 不支持跨 HTTP 请求的交互式事务。本实现先读取业务条件�
 2026-10-24 已完成服务凭据配置、真实 D1 初始化和 R2 连通检查。真实云端存储验收通过：D1 REST batch 失败时整批回滚、重复并发请求只预扣一次、签名上传不能覆盖源文件，以及删除本地临时目录后通过新实例下载结果。R2 的实际 OPTIONS 预检中，项目域名、www 域名及两个本机来源均返回 204，未授权来源返回 403。该轮存储测试耗时 27.849 秒，使用合成音频和供应商测试替身，不能作为真实配音耗时；Google/Fish 请求和新建音色均为 0。验收报告位于本机私有 `.runtime/cloudflare/live-smoke.json` 和 `cors-smoke.json`。
 
 `npm run test:full-chain` 仍明确使用隔离的本地 SQLite 测试数据，避免继承云端驱动后将测试游客写入错误的存储；真实云端存储测试使用上面的独立命令。
+
+`npm run test:cloudflare-live -- --providers` 额外使用真实 Google 识别翻译和 Fish inline 克隆，需要本机已准备的 `.runtime/fish/test-reference.wav`。2026-10-24 通过：17.086542 秒输入和输出一致，后台处理 24.283 秒；音色数量始终为 1，没有创建、删除或替换模型。总验收脚本 59.575 秒含数据库准备、竞争测试、清空临时目录、重新下载和音色库存核对，不能当作网页操作耗时。身份为预置测试账号，真实 Auth0 登录不在此验收范围。
 
 本次改动解决持久数据共享。独立 worker 仍需要能运行 Node/FFmpeg 的后台执行环境；仅将 Next 应用部署为普通 Vercel Functions 不会自动启动 worker。Vercel 后台执行方式和公网部署仍需单独完成，不能把编译成功视为上线完成。
 

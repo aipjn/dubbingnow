@@ -33,7 +33,7 @@ async function main() {
     stopping = true;
   });
   console.log(
-    `Dubbing worker started. Google: ${config.googleKey ? "configured" : "not configured"}. Clone provider: ${config.cloneProvider || "google"}. Fish: ${config.fishKey ? "configured" : "not configured"}; voice mode: ${config.fishVoiceMode || "saved_test"}.`,
+    `Dubbing worker started. Google: ${config.googleKey ? "configured" : "not configured"}. Clone provider: ${config.cloneProvider || "google"}. Fish: ${config.fishKey ? "configured" : "not configured"}; voice mode: ${config.fishVoiceMode || "inline"}.`,
   );
   try {
     while (!stopping) {

@@ -130,7 +130,9 @@ API全部 no-store，TLS，CORS 仅允许本站 origins、Authorization/Content-
 
 ## Fish 单席位模式（2026-10-18）
 
-默认 `CLONE_PROVIDER=fish`。`GET /capabilities` 返回 `voiceCloning: {provider: "fish", requiresConsentRecording: false, singleVoiceTest: true}`。此时 clone 请求只需原有字段和 `voiceMode: "clone"`，省略 `consentUploads`，不能附带 Google 授权上传。旧请求省略 mode 仍使用 preset。Google 的额外录音规则仅在配置 `CLONE_PROVIDER=google` 时生效。
+2026-10-24 起默认 `CLONE_PROVIDER=fish`、`FISH_VOICE_MODE=inline`，`GET /capabilities` 返回 `voiceCloning: {provider: "fish", requiresConsentRecording: false, singleVoiceTest: false}`。clone 请求只需源音频与 `voiceMode: "clone"`；每次从该源音频选取参考人声，随 Fish 合成请求传入，忽略全局测试模型 ID，不注册新模型。任务内参考标识不能用于其他任务，不对客户端公开。省略 `consentUploads`，不能附带 Google 授权上传；用户仍须具备原音频使用授权。Google 的额外录音规则仅在 `CLONE_PROVIDER=google` 时生效。
+
+以下固定声音行为仅适用于显式 `FISH_VOICE_MODE=saved_test`，其 capabilities 的 `singleVoiceTest` 为 `true`：
 
 首个单人素材选取参考并注册唯一 Fish 音色，后续 clone 任务固定复用保存的 ID，包括换素材、刷新、取消及失败重试。已有保存音色时无需新素材具备 10 秒参考；多说话人任务在测试模式下明确失败退款。所有 Fish 克隆创建只能经过 `.data/fish-test-voice.json` 的持久创建记录和文件锁，不提供自动删除、换音色或重复创建路径。创建请求响应丢失时以唯一标题核对远端，不盲目重试。详见 [FISH_TESTING.md](./FISH_TESTING.md)。
 

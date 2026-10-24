@@ -29,9 +29,10 @@ export default function Privacy() {
         remain on your device. Processing requests are sent to that service.
         Google receives audio for transcription and translation. Fish Audio
         receives selected reference speech and translated text for cloned speech
-        generation. Voice identifiers are kept on the server. The separate
-        single-voice test mode reuses an existing test voice; the production
-        path isolates voices by task. If the operator enables Google cloning
+        generation. The default cloning path sends reference speech with each
+        synthesis request and does not register a saved voice model. Reference
+        identifiers stay within the task. The separate single-voice test mode
+        reuses an existing test voice. If the operator enables Google cloning
         instead, its required consent recording is sent to Google for
         verification. Auth0 handles sign-in, and Cloudflare Turnstile handles
         guest verification.
@@ -46,10 +47,12 @@ export default function Privacy() {
       </p>
       <p>
         Account information, task records and credit transactions are stored
-        separately. Voice records and provider-hosted cloned voices are not
-        removed automatically with the audio. Operational backups may retain
-        account and voice records. Request removal through the contact below;
-        the service currently handles these requests manually.
+        separately. If saved-model cloning or the single-voice test mode is
+        enabled, voice records and provider-hosted saved voices are not removed
+        automatically with the audio. Operational backups may retain account and
+        saved-voice records. Request removal through the contact below; the
+        service currently handles these requests manually. Provider handling of
+        submitted data is also subject to each provider's policies.
       </p>
       <h2>Browser storage</h2>
       <p>

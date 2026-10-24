@@ -1071,6 +1071,14 @@ function DubbingToolContent({
                           track.
                         </p>
                       )}
+                    {voiceMode === "clone" &&
+                      !capabilities?.voiceCloning?.singleVoiceTest &&
+                      !consentRequired && (
+                        <p className="clone-consents">
+                          Include a clear 10–30 second passage of the original
+                          speaker for voice cloning.
+                        </p>
+                      )}
                     {voiceMode === "clone" && consentRequired && (
                       <div className="clone-consents">
                         <p>

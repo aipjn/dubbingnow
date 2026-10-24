@@ -23,6 +23,35 @@ const valid = {
   NEXT_PUBLIC_OPERATOR_NAME: "Local test fixture",
 };
 
+test("production inline cloning needs no saved-model capacity and shared test voices remain forbidden", () => {
+  assert.deepEqual(
+    productionProblems({
+      ...valid,
+      FISH_VOICE_MODE: "inline",
+      FISH_ALLOW_VOICE_CREATION: "false",
+    }),
+    [],
+  );
+  assert.deepEqual(
+    productionProblems({
+      ...valid,
+      FISH_VOICE_MODE: undefined,
+      FISH_ALLOW_VOICE_CREATION: "false",
+    }),
+    [],
+  );
+  assert.ok(
+    productionProblems({ ...valid, FISH_VOICE_MODE: "saved_test" }).some(
+      (issue) => issue.includes("FISH_VOICE_MODE"),
+    ),
+  );
+  assert.ok(
+    productionProblems({ ...valid, FISH_ALLOW_VOICE_CREATION: "false" }).some(
+      (issue) => issue.includes("creation is disabled"),
+    ),
+  );
+});
+
 test("deployment accepts paired same-origin settings and rejects an unusable browser API address", () => {
   assert.deepEqual(productionProblems(valid), []);
   assert.deepEqual(
