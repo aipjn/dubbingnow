@@ -49,6 +49,10 @@ D1 不支持跨 HTTP 请求的交互式事务。本实现先读取业务条件�
 
 `npm test` 包含真实 SQLite SQL 模拟 D1 REST 原子 batch 的竞争测试，以及真实 S3 SDK / HTTP / FFmpeg 的 R2 读写链路测试；测试不调用付费配音 API。它们不能替代真实 Cloudflare 权限、CORS 和网络联调。初始化和真实云端验收必须在凭据配置后执行。`npm run test:cloudflare-live` 使用真实 D1/R2 与 FFmpeg，校验 REST batch 整批回滚、并发幂等、R2 防覆盖，以及清空本地目录后下载结果；仅配音供应商为测试替身，不调用 Google/Fish，不创建音色，结束后清理本次唯一标识的合成测试数据。
 
+2026-10-24 已完成服务凭据配置、真实 D1 初始化和 R2 连通检查。真实云端存储验收通过：D1 REST batch 失败时整批回滚、重复并发请求只预扣一次、签名上传不能覆盖源文件，以及删除本地临时目录后通过新实例下载结果。R2 的实际 OPTIONS 预检中，项目域名、www 域名及两个本机来源均返回 204，未授权来源返回 403。该轮存储测试耗时 27.849 秒，使用合成音频和供应商测试替身，不能作为真实配音耗时；Google/Fish 请求和新建音色均为 0。验收报告位于本机私有 `.runtime/cloudflare/live-smoke.json` 和 `cors-smoke.json`。
+
+`npm run test:full-chain` 仍明确使用隔离的本地 SQLite 测试数据，避免继承云端驱动后将测试游客写入错误的存储；真实云端存储测试使用上面的独立命令。
+
 本次改动解决持久数据共享。独立 worker 仍需要能运行 Node/FFmpeg 的后台执行环境；仅将 Next 应用部署为普通 Vercel Functions 不会自动启动 worker。Vercel 后台执行方式和公网部署仍需单独完成，不能把编译成功视为上线完成。
 
 官方依据：[D1 REST query/batch](https://developers.cloudflare.com/api/resources/d1/subresources/database/methods/query/)、[D1 batch 事务](https://developers.cloudflare.com/d1/worker-api/d1-database/#batch)、[R2 签名 URL](https://developers.cloudflare.com/r2/api/s3/presigned-urls/)、[R2 条件写入](https://developers.cloudflare.com/r2/api/s3/api/)、[R2 CORS](https://developers.cloudflare.com/r2/buckets/cors/)。

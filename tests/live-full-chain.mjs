@@ -14,6 +14,8 @@ import { Store } from "../server/store.ts";
 import { FishVoice } from "../server/providers/fish.ts";
 
 const origin = "http://127.0.0.1:3000";
+// This fixture seeds SQLite directly; never inherit the deployed cloud driver.
+process.env.PERSISTENCE_DRIVER = "local";
 await mkdir(".runtime/full-chain", { recursive: true });
 const out = await mkdtemp(path.resolve(".runtime/full-chain/run-"));
 const originalConfig = loadConfig();

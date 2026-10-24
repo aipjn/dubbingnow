@@ -6,7 +6,6 @@ import path from "node:path";
 import { randomUUID, createHash } from "node:crypto";
 import { loadConfig } from "../server/config.ts";
 import { CloudflareStore } from "../server/cloudflare-store.ts";
-import { D1Failure } from "../server/cloudflare/d1.ts";
 import { PrivateStorage } from "../server/storage.ts";
 import { Processor } from "../server/processor.ts";
 import { Backend } from "../server/backend.ts";
@@ -35,7 +34,9 @@ try {
         params: [],
       },
     ]),
-    D1Failure,
+    (error) =>
+      error?.constructor?.name === "D1Failure" &&
+      error.message === "revision conflict",
   );
   assert.equal(
     await store.get("SELECT id FROM limits WHERE id=?", marker),
