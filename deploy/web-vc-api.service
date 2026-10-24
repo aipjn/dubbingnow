@@ -1,0 +1,25 @@
+[Unit]
+Description=Web VC API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=web-vc
+Group=web-vc
+WorkingDirectory=/srv/web-vc/current
+EnvironmentFile=/etc/web-vc/environment
+ExecStartPre=/usr/bin/node --import tsx server/scripts/preflight.ts --require-build
+ExecStart=/usr/bin/node node_modules/next/dist/bin/next start --hostname 127.0.0.1
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=60
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/web-vc /srv/web-vc/current/.next
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,1480 @@
+openapi: 3.1.0
+info:
+  title: DubbingNow API
+  version: 2.1.0
+  description:
+    Implemented Next.js Node API with Auth0 verification, Turnstile guest grants, SQLite
+    credits, signed audio storage and a Google Gemini worker. Payment checkout is reserved but
+    disabled. See BACKEND.md for configuration and current limitations.
+servers:
+  - url: http://127.0.0.1:3000/v1
+    description: Local API; external credentials must be configured for live dubbing.
+  - url: https://api.dubbingnow.com/v1
+    description: Illustrative production host; not an existing deployed API.
+security:
+  - sessionBearer: []
+  - auth0Bearer: []
+paths:
+  /sessions:
+    post:
+      operationId: createSession
+      security: []
+      summary: Create a rate-limited anonymous 30-day session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+      responses:
+        "201":
+          description: Anonymous session; no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        default:
+          $ref: "#/components/responses/Error"
+  /capabilities:
+    get:
+      operationId: getCapabilities
+      security: []
+      summary: Actual supported language and upload capabilities
+      responses:
+        "200":
+          description: Supported capabilities
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Capabilities"
+        default:
+          $ref: "#/components/responses/Error"
+  /quota:
+    get:
+      operationId: getQuota
+      summary: Authoritative available/reserved credits or durable guest trial quota
+      responses:
+        "200":
+          description: Effective plan and unreserved credits; no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quota"
+        default:
+          $ref: "#/components/responses/Error"
+  /uploads:
+    post:
+      operationId: createUpload
+      summary: Request a private signed direct PUT; no file bytes go through this API
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadRequest"
+      responses:
+        "201":
+          description: 15-minute signed upload authorization
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadTicket"
+        default:
+          $ref: "#/components/responses/Error"
+  /uploads/{id}/complete:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      operationId: completeUpload
+      summary: Idempotently verify uploaded bytes, hash, decodability and duration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+      responses:
+        "200":
+          description: Server-probed media metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadedMedia"
+        default:
+          $ref: "#/components/responses/Error"
+  /jobs:
+    get:
+      operationId: listJobs
+      summary: List this session's recordings, including expired results
+      parameters:
+        - name: cursor
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Newest recordings first; download links are refreshed by getJob
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobHistory"
+        default:
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: createJob
+      summary: Idempotently consume a quote and atomically reserve credits or trial use
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateJobRequest"
+      responses:
+        "202":
+          description: Accepted job, existing job, or completed cache hit
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        default:
+          $ref: "#/components/responses/Error"
+  /jobs/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      operationId: getJob
+      summary: Retrieve job state; refresh result signatures until 24-hour retention expires
+      responses:
+        "200":
+          description: Current job, including completed or failed jobs; no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        default:
+          $ref: "#/components/responses/Error"
+  /jobs/{id}/cancel:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      operationId: cancelJob
+      summary: Confirm cancellation and idempotently return reserved credits
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+      responses:
+        "200":
+          description: Cancelled job; repeated cancellation returns the same state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        default:
+          $ref: "#/components/responses/Error"
+  /billing/plans:
+    get:
+      operationId: getPlans
+      security: []
+      summary: Authoritative prices, credit packs and purchase availability
+      responses:
+        "200":
+          description: Free and paid plans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BillingPlan"
+        default:
+          $ref: "#/components/responses/Error"
+  /billing/checkout:
+    post:
+      operationId: createCheckout
+      summary: Reserved payment contract; currently returns 503, no checkout or charge
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckoutRequest"
+      responses:
+        "201":
+          description: Hosted checkout URL; server controls price and trusted return URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Checkout"
+        "503": &a5
+          $ref: "#/components/responses/Error"
+        default:
+          $ref: "#/components/responses/Error"
+      security: &a1
+        - auth0Bearer: []
+  /billing/policy:
+    get:
+      operationId: getPolicy
+      summary: getPolicy
+      security: []
+      responses:
+        "200":
+          description: Successful response; no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingPolicy"
+        default:
+          $ref: "#/components/responses/Error"
+  /guest/verify:
+    post:
+      operationId: verifyGuest
+      summary: Validate Turnstile and issue a 10-minute session-bound trial grant
+      security:
+        - sessionBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HumanVerification"
+      responses:
+        "200":
+          description: Successful response; no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quota"
+        default:
+          $ref: "#/components/responses/Error"
+  /users/me:
+    get:
+      operationId: getCurrentUser
+      summary: Upsert app user by verified Auth0 issuer/sub; grant signup credits once atomically
+      security: *a1
+      responses:
+        "200":
+          description: Successful response; no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        default:
+          $ref: "#/components/responses/Error"
+    patch:
+      operationId: updateProfile
+      summary: updateProfile
+      security: *a1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileUpdate"
+      responses:
+        "200":
+          description: Successful response; no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        default:
+          $ref: "#/components/responses/Error"
+  /credits/transactions:
+    get:
+      operationId: getCreditHistory
+      summary: getCreditHistory
+      security: *a1
+      parameters:
+        - &a3
+          name: cursor
+          in: query
+          schema: &a2
+            type: string
+      responses:
+        "200":
+          description: Successful response; no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreditHistory"
+        default:
+          $ref: "#/components/responses/Error"
+  /jobs/quote:
+    post:
+      operationId: quoteJob
+      summary:
+        Server-probed duration, frozen policy snapshot and exact owner/input binding; expires in 15
+        minutes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuoteRequest"
+      responses:
+        "201":
+          description: Successful response; no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quote"
+        default:
+          $ref: "#/components/responses/Error"
+  /admin/users:
+    get:
+      operationId: listUsers
+      summary: Administrator only; paginated app users
+      security: *a1
+      parameters:
+        - name: query
+          in: query
+          schema: *a2
+        - *a3
+      responses:
+        "200":
+          description: Successful response; no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserList"
+        default:
+          $ref: "#/components/responses/Error"
+  /admin/users/{id}:
+    patch:
+      operationId: updateUser
+      summary: Administrator only; suspend or restore an app account
+      security: *a1
+      parameters:
+        - &a4
+          $ref: "#/components/parameters/ResourceId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdate"
+      responses:
+        "200":
+          description: Successful response; no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ManagedUser"
+        default:
+          $ref: "#/components/responses/Error"
+  /admin/users/{id}/credits:
+    post:
+      operationId: adjustCredits
+      summary: Administrator only; atomic, audited credit adjustment
+      security: *a1
+      parameters:
+        - *a4
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreditAdjustment"
+      responses:
+        "200":
+          description: Successful response; no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ManagedUser"
+        default:
+          $ref: "#/components/responses/Error"
+  /admin/billing/policy:
+    put:
+      operationId: updatePolicy
+      summary:
+        Administrator only; version comparison prevents lost updates; stale version returns 409
+        POLICY_CONFLICT
+      security: *a1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BillingPolicy"
+      responses:
+        "200":
+          description: Successful response; no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingPolicy"
+        default:
+          $ref: "#/components/responses/Error"
+  /billing/checkouts/{id}:
+    get:
+      operationId: getCheckout
+      summary: Reserved payment contract; currently returns 410, no active checkout
+      security: *a1
+      parameters:
+        - *a4
+      responses:
+        "200":
+          description: Successful response; no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckoutStatus"
+        "410": *a5
+        default:
+          $ref: "#/components/responses/Error"
+  /health:
+    get:
+      operationId: getHealth
+      security: []
+      summary: API liveness with worker/disk/configuration flags; use ready for admission readiness
+      responses:
+        "200":
+          description: Safe configuration booleans; no secrets
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                  - configured
+                properties:
+                  status:
+                    const: ok
+                  worker:
+                    type: boolean
+                  disk:
+                    type: boolean
+                  configured:
+                    type: object
+                    required:
+                      - google
+                      - auth0
+                      - turnstile
+                    properties:
+                      google:
+                        type: boolean
+                      fish:
+                        type: boolean
+                      auth0:
+                        type: boolean
+                      turnstile:
+                        type: boolean
+        default: *a5
+  /ready:
+    get:
+      operationId: getReadiness
+      security: []
+      summary: Readiness based on configured providers, free disk and required worker heartbeat
+      responses:
+        "200":
+          description: Ready for new jobs; does not call external providers or validate their balance
+        "503":
+          description: Worker, disk or provider configuration unavailable, or new jobs paused
+  /files/upload/{id}:
+    parameters: &a6
+      - $ref: "#/components/parameters/ResourceId"
+    put:
+      operationId: putSignedUpload
+      security:
+        - fileTicket: []
+      summary: Stream exact authorized audio bytes; checks size and SHA-256
+      requestBody:
+        required: true
+        content:
+          audio/mp4:
+            schema:
+              type: string
+              format: binary
+          audio/mpeg:
+            schema:
+              type: string
+              format: binary
+          audio/wav:
+            schema:
+              type: string
+              format: binary
+      responses:
+        "204":
+          description: Bytes received; subsequently call completeUpload for media validation
+        default: *a5
+  /files/result/{id}:
+    parameters: *a6
+    get:
+      operationId: getSignedResult
+      security:
+        - fileTicket: []
+      summary: Private WAV result with byte ranges; object retention 24 hours
+      parameters:
+        - name: Range
+          in: header
+          schema:
+            type: string
+          description: A single bytes=start-end or suffix range
+      responses:
+        "200":
+          description: Complete WAV
+          headers: &a7
+            Accept-Ranges:
+              schema:
+                type: string
+            Content-Length:
+              schema:
+                type: integer
+            Content-Range:
+              schema:
+                type: string
+          content:
+            audio/wav:
+              schema:
+                type: string
+                format: binary
+        "206":
+          description: Partial WAV
+          headers: *a7
+          content:
+            audio/wav:
+              schema:
+                type: string
+                format: binary
+        default: *a5
+    head:
+      operationId: headSignedResult
+      security:
+        - fileTicket: []
+      summary: Check private result headers
+      responses:
+        "200":
+          description: WAV metadata with no response body
+          headers: *a7
+        default: *a5
+components:
+  securitySchemes:
+    sessionBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: Opaque guest token
+    auth0Bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description:
+        Auth0 API access token. Validate signature, issuer, audience and expiry on the backend.
+        Never accept an ID token.
+    fileTicket:
+      type: apiKey
+      in: query
+      name: ticket
+      description:
+        Signed 15-minute file capability; bound to resource, owner and scope. Owner status is
+        rechecked.
+  parameters:
+    ResourceId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description:
+        UUID generated once per logical request; same session, endpoint and key retain the same
+        resource for at least 7 days. Different body with the same key returns 409.
+      schema:
+        type: string
+        format: uuid
+  responses:
+    Error:
+      description:
+        Standard JSON error; refer to API.md for status/code mappings. Rate limits also include
+        Retry-After seconds.
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+            minimum: 1
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorBody"
+  schemas:
+    VoiceTier:
+      type: string
+      enum:
+        - standard
+        - high_fidelity
+    VoiceMode:
+      type: string
+      enum: [preset, clone]
+      description: Defaults to preset for legacy requests. Clone requires suitable reference speech for first creation. Google additionally requires owned consent recordings. Fish test mode persistently reuses one saved voice; never falls back to preset.
+    SpeakerConsent:
+      type: object
+      additionalProperties: false
+      required: [speaker, uploadId]
+      properties:
+        speaker:
+          type: integer
+          minimum: 0
+          maximum: 7
+          description: Zero-based speaker number in order of first appearance.
+        uploadId:
+          type: string
+          format: uuid
+          description: Completed private upload owned by this actor, up to 30 seconds and 2 MB. Same-speaker human consent verified by Google.
+    Session:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - token
+        - expiresAt
+        - user
+      properties:
+        id: *a2
+        token:
+          type: string
+          minLength: 1
+        expiresAt: &a8
+          type: string
+          format: date-time
+        user:
+          type: "null"
+          description:
+            This response is a guest session. Auth0 tokens are obtained by the SDK; GET /users/me
+            returns the app user.
+    ApiLanguage:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - name
+        - supportsSource
+        - supportsTarget
+      properties:
+        code:
+          type: string
+          description: BCP47 language code; auto is not an actual language
+        name:
+          type: string
+        supportsSource:
+          type: boolean
+        supportsTarget:
+          type: boolean
+    Capabilities:
+      type: object
+      additionalProperties: false
+      required:
+        - languages
+        - maxFileBytes
+        - acceptedContentTypes
+      properties:
+        maxSpeakers:
+          type: integer
+          minimum: 1
+          maximum: 8
+        voiceCloning:
+          type: object
+          additionalProperties: false
+          required: [provider, requiresConsentRecording, singleVoiceTest]
+          properties:
+            enabled:
+              type: boolean
+            provider:
+              type: string
+              enum: [google, fish]
+            requiresConsentRecording:
+              type: boolean
+            singleVoiceTest:
+              type: boolean
+              description: Fish test mode reuses one saved voice and accepts single-speaker recordings only.
+        languages:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/ApiLanguage"
+        maxFileBytes:
+          type: integer
+          minimum: 1
+          maximum: 500000000
+        acceptedContentTypes:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            enum:
+              - audio/mp4
+              - audio/mpeg
+              - audio/wav
+    Quota:
+      type: object
+      additionalProperties: false
+      required:
+        - kind
+        - availableCredits
+        - reservedCredits
+        - trial
+        - maxDurationSeconds
+        - maxFileBytes
+        - voiceTier
+      properties:
+        kind:
+          type: string
+          enum:
+            - guest
+            - user
+        availableCredits:
+          type: integer
+          minimum: 0
+        reservedCredits:
+          type: integer
+          minimum: 0
+        trial:
+          oneOf:
+            - $ref: "#/components/schemas/GuestTrial"
+            - type: "null"
+        maxDurationSeconds:
+          type: integer
+          minimum: 1
+          maximum: 7200
+        maxFileBytes:
+          type: integer
+          minimum: 1
+          maximum: 500000000
+        voiceTier:
+          $ref: "#/components/schemas/VoiceTier"
+    UploadRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - filename
+        - contentType
+        - sizeBytes
+        - sha256
+      properties:
+        filename:
+          type: string
+          minLength: 1
+          maxLength: 255
+        contentType:
+          type: string
+          enum:
+            - audio/mp4
+            - audio/mpeg
+            - audio/wav
+        sizeBytes:
+          type: integer
+          minimum: 1
+          maximum: 500000000
+        sha256:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+          description: Full file SHA-256; verified by backend after upload
+    UploadTicket:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - url
+        - method
+        - headers
+        - expiresAt
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+          format: uri
+          description: HTTPS private-storage signed upload URL
+        method:
+          type: string
+          const: PUT
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+        expiresAt:
+          type: string
+          format: date-time
+    UploadedMedia:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - durationSeconds
+        - mediaType
+      properties:
+        id:
+          type: string
+        durationSeconds:
+          type: integer
+          minimum: 1
+          description: Actual duration probed by server; rounded up
+        mediaType:
+          type: string
+          const: audio
+    CreateJobRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - uploadId
+        - sourceLanguage
+        - targetLanguage
+        - voiceTier
+        - quoteId
+      properties:
+        uploadId:
+          type: string
+        sourceLanguage:
+          type: string
+          description: auto or a supported source language code
+        targetLanguage:
+          type: string
+          description: Supported target language code; cannot equal explicit source
+        voiceTier:
+          $ref: "#/components/schemas/VoiceTier"
+        voiceMode:
+          $ref: "#/components/schemas/VoiceMode"
+        consentUploads:
+          type: array
+          minItems: 1
+          maxItems: 8
+          description: Required only for Google clone mode. Unique speaker numbers and distinct uploads; may not reuse the source upload. Omit for Fish clone and preset modes.
+          items:
+            $ref: "#/components/schemas/SpeakerConsent"
+        timeline:
+          $ref: "#/components/schemas/VideoTimeline"
+        quoteId: *a2
+    VideoTimeline:
+      type: object
+      additionalProperties: false
+      required:
+        - durationSeconds
+        - audioOffsetSeconds
+      description:
+        Original video stays local. Validate offset < duration, capabilities and guest/user
+        limits. Return aligned audio starting at video t=0, within 0.25s of durationSeconds. Billing
+        uses ceil(max(probed audio duration + offset, durationSeconds)).
+      properties:
+        durationSeconds:
+          type: number
+          exclusiveMinimum: 0
+          maximum: 7200
+        audioOffsetSeconds:
+          type: number
+          minimum: 0
+          exclusiveMaximum: 7200
+    Asset:
+      type: object
+      additionalProperties: false
+      required:
+        - url
+        - filename
+        - contentType
+        - expiresAt
+      properties:
+        url:
+          type: string
+          format: uri
+          description:
+            Signed HTTPS audio URL. Preview supports Range; download uses attachment
+            Content-Disposition and permits website-origin CORS GET for local merging.
+        filename:
+          type: string
+        contentType:
+          type: string
+          enum:
+            - audio/mp4
+            - audio/mpeg
+            - audio/wav
+        expiresAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Required timestamp in live service; null only for local demo assets
+    JobResult:
+      type: object
+      additionalProperties: false
+      required:
+        - mediaType
+        - preview
+        - download
+        - durationSeconds
+        - sourceLanguage
+        - targetLanguage
+        - speakerCount
+        - isDemo
+      properties:
+        mediaType:
+          type: string
+          const: audio
+        preview:
+          $ref: "#/components/schemas/Asset"
+        download:
+          $ref: "#/components/schemas/Asset"
+        durationSeconds:
+          type: number
+          exclusiveMinimum: 0
+          description: Actual aligned audio duration; may be fractional.
+        sourceLanguage:
+          type: string
+          description: Actual detected language; never auto
+        targetLanguage:
+          type: string
+        speakerCount:
+          type: integer
+          minimum: 1
+        voiceMode:
+          $ref: "#/components/schemas/VoiceMode"
+        isDemo:
+          type: boolean
+          const: false
+          description: Live API must always return false
+    JobHistory:
+      type: object
+      required: [items, nextCursor]
+      properties:
+        nextCursor:
+          type: [string, "null"]
+        items:
+          type: array
+          items:
+            type: object
+            required:
+              [
+                id,
+                status,
+                createdAt,
+                targetLanguage,
+                durationSeconds,
+                resultAvailable,
+                resultExpiresAt,
+              ]
+            properties:
+              id: { type: string }
+              status:
+                {
+                  type: string,
+                  enum:
+                    [
+                      queued,
+                      transcribing,
+                      translating,
+                      synthesizing,
+                      aligning,
+                      rendering,
+                      completed,
+                      failed,
+                      cancelled,
+                    ],
+                }
+              createdAt: { type: string, format: date-time }
+              targetLanguage: { type: string }
+              durationSeconds: { type: number }
+              resultAvailable: { type: boolean }
+              resultExpiresAt: { type: [string, "null"], format: date-time }
+    Job:
+      type: object
+      additionalProperties: false
+      description:
+        rendering means audio packaging only. completed requires result and null error; failed
+        requires error and null result; other states require both null. Progress never decreases.
+      required:
+        - id
+        - status
+        - progress
+        - createdAt
+        - updatedAt
+        - pollAfterMs
+        - cacheHit
+        - result
+        - error
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum:
+            - queued
+            - transcribing
+            - translating
+            - synthesizing
+            - aligning
+            - rendering
+            - completed
+            - failed
+            - cancelled
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        pollAfterMs:
+          type: integer
+          minimum: 500
+          maximum: 10000
+        cacheHit:
+          type: boolean
+        result:
+          oneOf:
+            - $ref: "#/components/schemas/JobResult"
+            - type: "null"
+        error:
+          oneOf:
+            - $ref: "#/components/schemas/ApiError"
+            - type: "null"
+    BillingPlan:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - amountMinor
+        - currency
+        - includedCredits
+        - available
+      properties:
+        id:
+          type: string
+          enum:
+            - free
+            - creator
+            - studio
+        name: *a2
+        amountMinor:
+          type:
+            - integer
+            - "null"
+          minimum: 0
+          description: Null when pricing has not been confirmed; available must be false then.
+        currency:
+          type: string
+          const: USD
+        includedCredits:
+          type: integer
+          minimum: 0
+        available:
+          type: boolean
+    CheckoutRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - planId
+      properties:
+        planId:
+          type: string
+          enum:
+            - creator
+            - studio
+    Checkout:
+      type: object
+      additionalProperties: false
+      required:
+        - url
+        - expiresAt
+        - id
+      properties:
+        url:
+          type: string
+          format: uri
+          pattern: ^https://
+          description: Trusted hosted checkout; return URL is configured by server
+        expiresAt:
+          type: string
+          format: date-time
+        id: *a2
+    ApiError:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - retryable
+      properties:
+        code:
+          type: string
+          enum:
+            - INVALID_REQUEST
+            - UNAUTHORIZED
+            - RATE_LIMITED
+            - QUOTA_EXCEEDED
+            - FILE_TOO_LARGE
+            - UNSUPPORTED_MEDIA
+            - UPLOAD_EXPIRED
+            - UPLOAD_INCOMPLETE
+            - JOB_NOT_FOUND
+            - JOB_NOT_CANCELLABLE
+            - IDEMPOTENCY_CONFLICT
+            - RESULT_EXPIRED
+            - CHECKOUT_EXPIRED
+            - PROCESSING_FAILED
+            - SERVICE_UNAVAILABLE
+            - HUMAN_VERIFICATION_REQUIRED
+            - HUMAN_VERIFICATION_FAILED
+            - TRIAL_LIMIT_EXCEEDED
+            - INSUFFICIENT_CREDITS
+            - QUOTE_EXPIRED
+            - FORBIDDEN
+            - ACCOUNT_SUSPENDED
+            - POLICY_CONFLICT
+        message:
+          type: string
+        retryable:
+          type: boolean
+        requestId:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+    ErrorBody:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+      properties:
+        error:
+          $ref: "#/components/schemas/ApiError"
+    User:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - email
+        - displayName
+        - role
+        - status
+        - createdAt
+      properties:
+        id: *a2
+        email:
+          type: string
+          format: email
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 80
+        role:
+          type: string
+          enum:
+            - user
+            - admin
+        status:
+          type: string
+          enum:
+            - active
+            - suspended
+        createdAt: *a8
+    BillingPolicy:
+      type: object
+      additionalProperties: false
+      required:
+        - version
+        - signupCredits
+        - guestTrialSeconds
+        - guestTrialUses
+        - creditsPerMinute
+        - rounding
+        - minimumCredits
+        - maxDurationSeconds
+      properties:
+        version: *a2
+        signupCredits:
+          type: integer
+          minimum: 0
+        guestTrialSeconds:
+          type: integer
+          minimum: 1
+          maximum: 7200
+        guestTrialUses:
+          type: integer
+          minimum: 1
+        creditsPerMinute:
+          type: object
+          additionalProperties: false
+          required:
+            - standard
+            - high_fidelity
+          properties:
+            standard:
+              type: integer
+              minimum: 1
+            high_fidelity:
+              type: integer
+              minimum: 1
+        rounding:
+          type: string
+          enum:
+            - per_second
+            - per_minute
+        minimumCredits:
+          type: integer
+          minimum: 1
+        maxDurationSeconds:
+          type: integer
+          minimum: 1
+          maximum: 7200
+    GuestTrial:
+      type: object
+      additionalProperties: false
+      required:
+        - remainingUses
+        - maxDurationSeconds
+        - verifiedUntil
+      properties:
+        remainingUses:
+          type: integer
+          minimum: 0
+        maxDurationSeconds:
+          type: integer
+          minimum: 1
+          maximum: 7200
+        verifiedUntil:
+          type:
+            - string
+            - "null"
+          format: date-time
+    HumanVerification:
+      type: object
+      additionalProperties: false
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          minLength: 1
+          maxLength: 2048
+          description:
+            Turnstile token, validated server-side with Siteverify. Never accept a browser
+            verified=true flag.
+    QuoteRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - uploadId
+        - sourceLanguage
+        - targetLanguage
+        - voiceTier
+      properties:
+        uploadId:
+          type: string
+        sourceLanguage:
+          type: string
+          description: auto or a supported source language code
+        targetLanguage:
+          type: string
+          description: Supported target language code; cannot equal explicit source
+        voiceTier:
+          $ref: "#/components/schemas/VoiceTier"
+        voiceMode:
+          $ref: "#/components/schemas/VoiceMode"
+        consentUploads:
+          type: array
+          minItems: 1
+          maxItems: 8
+          description: Required only for Google clone mode. Unique speaker numbers and distinct uploads; may not reuse the source upload. Omit for Fish clone and preset modes.
+          items:
+            $ref: "#/components/schemas/SpeakerConsent"
+        timeline:
+          $ref: "#/components/schemas/VideoTimeline"
+    Quote:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - kind
+        - durationSeconds
+        - credits
+        - policyVersion
+        - expiresAt
+      properties:
+        id: *a2
+        kind:
+          type: string
+          enum:
+            - trial
+            - credits
+        durationSeconds:
+          type: integer
+          minimum: 1
+        credits:
+          type: integer
+          minimum: 0
+        policyVersion: *a2
+        expiresAt: *a8
+    CreditEntry:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - type
+        - deltaCredits
+        - balanceAfter
+        - createdAt
+        - note
+        - jobId
+      properties:
+        id: *a2
+        type:
+          type: string
+          enum:
+            - signup_bonus
+            - reserve
+            - consume
+            - release
+            - purchase
+            - adjustment
+        deltaCredits:
+          type: integer
+        balanceAfter:
+          type: integer
+          minimum: 0
+        createdAt: *a8
+        note: *a2
+        jobId:
+          type:
+            - string
+            - "null"
+    CreditHistory:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - nextCursor
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CreditEntry"
+        nextCursor:
+          type:
+            - string
+            - "null"
+    ManagedUser:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - email
+        - displayName
+        - role
+        - status
+        - createdAt
+        - availableCredits
+        - reservedCredits
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 80
+        role:
+          type: string
+          enum:
+            - user
+            - admin
+        status:
+          type: string
+          enum:
+            - active
+            - suspended
+        createdAt:
+          type: string
+          format: date-time
+        availableCredits:
+          type: integer
+          minimum: 0
+        reservedCredits:
+          type: integer
+          minimum: 0
+    UserList:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - nextCursor
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ManagedUser"
+        nextCursor:
+          type:
+            - string
+            - "null"
+    ProfileUpdate:
+      type: object
+      additionalProperties: false
+      required:
+        - displayName
+      properties:
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 80
+    UserUpdate:
+      type: object
+      additionalProperties: false
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - active
+            - suspended
+    CreditAdjustment:
+      type: object
+      additionalProperties: false
+      required:
+        - deltaCredits
+        - reason
+      properties:
+        deltaCredits:
+          type: integer
+          not:
+            const: 0
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+    CheckoutStatus:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - status
+        - creditsGranted
+      properties:
+        id: *a2
+        status:
+          type: string
+          enum:
+            - pending
+            - paid
+            - cancelled
+            - expired
+        creditsGranted:
+          type: integer
+          minimum: 0

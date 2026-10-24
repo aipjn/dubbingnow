@@ -1,0 +1,54 @@
+{
+  "name": "dubbingnow-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/next-cli.mjs dev --hostname 127.0.0.1",
+    "build": "node scripts/next-cli.mjs build",
+    "start": "node scripts/next-cli.mjs start --hostname 127.0.0.1",
+    "typecheck": "node scripts/next-cli.mjs typegen && tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "test:e2e": "playwright test",
+    "test:live": "node tests/live-client.mjs && node tests/live-video.mjs",
+    "test:auth": "node tests/live-auth.mjs",
+    "test:clone-ui": "node tests/live-clone.mjs",
+    "test:full-chain": "node --env-file-if-exists=.env.local --import tsx tests/live-full-chain.mjs",
+    "test:compare-streaming": "node --env-file-if-exists=.env.local tests/compare-full-chain.mjs",
+    "worker": "node --env-file-if-exists=.env.local --import tsx server/worker.ts",
+    "benchmark:dubbing": "node --env-file-if-exists=.env.local --import tsx server/scripts/benchmark-dubbing.ts",
+    "benchmark:local": "node --env-file-if-exists=.env.local --import tsx server/scripts/benchmark-local.ts",
+    "fish:voice": "node --env-file-if-exists=.env.local --import tsx server/scripts/fish-voice.ts",
+    "admin:grant": "node --env-file-if-exists=.env.local --import tsx server/scripts/grant-admin.ts",
+    "preflight": "node --env-file-if-exists=.env.local --import tsx server/scripts/preflight.ts",
+    "monitor": "node --env-file-if-exists=.env.local --import tsx server/scripts/monitor.ts",
+    "backup": "node --env-file-if-exists=.env.local --import tsx server/scripts/backup.ts",
+    "test:backend-live": "node tests/live-backend.mjs"
+  },
+  "dependencies": {
+    "@auth0/auth0-spa-js": "^2.28.2",
+    "@mediabunny/aac-encoder": "^1.61.1",
+    "hash-wasm": "^4.12.0",
+    "jose": "^6.2.12",
+    "lucide-react": "^0.577.0",
+    "mediabunny": "^1.61.1",
+    "next": "16.4.3",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "zod": "4.6.6"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "prettier": "^3.9.9",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0",
+    "yaml": "^2.9.1"
+  },
+  "engines": {
+    "node": ">=22.16.0"
+  }
+}

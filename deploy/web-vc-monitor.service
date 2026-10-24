@@ -1,0 +1,11 @@
+[Unit]
+Description=Check Web VC worker, disk, queue and recent failures
+[Service]
+Type=oneshot
+User=web-vc
+Group=web-vc
+WorkingDirectory=/srv/web-vc/current
+EnvironmentFile=/etc/web-vc/environment
+ExecStart=/usr/bin/node --import tsx server/scripts/monitor.ts
+UMask=0077
+NoNewPrivileges=true

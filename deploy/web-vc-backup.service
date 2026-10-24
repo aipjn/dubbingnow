@@ -1,0 +1,11 @@
+[Unit]
+Description=Back up Web VC database and voice registry
+[Service]
+Type=oneshot
+User=web-vc
+Group=web-vc
+WorkingDirectory=/srv/web-vc/current
+EnvironmentFile=/etc/web-vc/environment
+ExecStart=/usr/bin/node --import tsx server/scripts/backup.ts create /var/backups/web-vc
+UMask=0077
+NoNewPrivileges=true
