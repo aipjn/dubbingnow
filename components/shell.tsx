@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowUpRight, AudioLines, Globe2, Menu } from "lucide-react";
 import { AccountNavigation } from "./account/navigation";
 import { tools } from "@/lib/catalog";
+import { ToolsNavigation } from "./tools-navigation";
 
 export function Logo() {
   return (
@@ -22,19 +23,7 @@ export function Header() {
       <div className="container header-inner">
         <Logo />
         <nav className="desktop-nav" aria-label="Main navigation">
-          <details className="nav-dropdown">
-            <summary>
-              Tools <span>⌄</span>
-            </summary>
-            <div className="nav-menu">
-              {tools.map((tool) => (
-                <Link key={tool.slug} href={`/${tool.slug}`}>
-                  {tool.name}
-                  <ArrowUpRight size={15} />
-                </Link>
-              ))}
-            </div>
-          </details>
+          <ToolsNavigation />
           <Link href="/languages">Languages</Link>
           <Link href="/pricing">Pricing</Link>
           <Link href="/how-to-dub-a-video">How it works</Link>
