@@ -4,6 +4,10 @@ import { makeBuildId } from "./server/build-config";
 const config: NextConfig = {
   poweredByHeader: false,
   devIndicators: false,
+  outputFileTracingIncludes: {
+    "/v1/*": ["./vendor/media/bin/*"],
+    "/api/*": ["./vendor/media/bin/*"],
+  },
   turbopack: { root: process.cwd() },
   generateBuildId: async () => makeBuildId(process.env),
   async headers() {

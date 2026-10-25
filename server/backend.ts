@@ -18,11 +18,13 @@ import {
 } from "./auth";
 import * as v from "./validation";
 import { diskReady } from "./health";
+import { dispatchJob } from "./job-dispatch";
 export class Backend {
   readonly storage: PrivateStorage;
   private verifyIdentity: VerifyIdentity;
   private verifyHuman: VerifyHuman;
   private ready: (input: QuoteRequest) => boolean;
+  private enqueueJob?: (jobId: string) => Promise<void>;
   constructor(
     readonly config: ServerConfig,
     readonly store: DataStore,
@@ -31,9 +33,13 @@ export class Backend {
       verifyHuman?: VerifyHuman;
       providerReady?: () => boolean;
       storage?: PrivateStorage;
+      dispatchJob?: (jobId: string) => Promise<void>;
     } = {},
   ) {
     this.storage = options.storage || new PrivateStorage(config, store);
+    this.enqueueJob =
+      options.dispatchJob ||
+      (config.jobExecution === "vercel-queue" ? dispatchJob : undefined);
     this.verifyIdentity =
       options.verifyIdentity || makeIdentityVerifier(config);
     this.verifyHuman = options.verifyHuman || makeHumanVerifier(config);
@@ -429,15 +435,31 @@ export class Backend {
     }
     if (path === "jobs" && method === "POST") {
       const input = await this.json(request, v.jobBody);
+      const row = await this.store.createJob(
+        actor,
+        input,
+        this.key(request),
+        this.ready(input) && (await diskReady(this.config)),
+      );
+      if (this.enqueueJob && row.status === "queued") {
+        try {
+          await this.enqueueJob(row.id);
+        } catch {
+          const current = await this.store.job(actor, row.id);
+          // A delivery may have succeeded despite a lost publish response.
+          if (current.status !== "queued")
+            return this.response(await this.view(current), 202);
+          await this.store.cancel(actor, row.id);
+          throw new BackendError(
+            "SERVICE_UNAVAILABLE",
+            "The background service could not start your task. Your credits were returned. Please try again.",
+            503,
+            true,
+          );
+        }
+      }
       return this.response(
-        await this.view(
-          await this.store.createJob(
-            actor,
-            input,
-            this.key(request),
-            this.ready(input) && (await diskReady(this.config)),
-          ),
-        ),
+        await this.view(await this.store.job(actor, row.id)),
         202,
       );
     }

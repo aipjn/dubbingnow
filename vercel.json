@@ -1,0 +1,17 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "regions": ["iad1"],
+  "crons": [{ "path": "/api/maintenance", "schedule": "0 3 * * *" }],
+  "functions": {
+    "app/api/queues/dubbing/route.ts": {
+      "experimentalTriggers": [
+        { "type": "queue/v2beta", "topic": "dubbingnow-jobs" }
+      ]
+    },
+    "app/api/queues/cleanup/route.ts": {
+      "experimentalTriggers": [
+        { "type": "queue/v2beta", "topic": "dubbingnow-cleanup" }
+      ]
+    }
+  }
+}

@@ -9,3 +9,4 @@ playwright-report
 **/.env*
 *.tsbuildinfo
 .DS_Store
+vendor/media

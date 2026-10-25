@@ -3,6 +3,7 @@ import { randomBytes } from "node:crypto";
 import path from "node:path";
 import { tmpdir } from "node:os";
 export interface ServerConfig {
+  jobExecution?: "worker" | "vercel-queue";
   persistence?: "local" | "cloudflare";
   cloudflareAccountId?: string;
   d1DatabaseId?: string;
@@ -70,6 +71,11 @@ export function loadConfig(): ServerConfig {
     throw new Error("Invalid PERSISTENCE_DRIVER.");
   if (process.env.VERCEL && persistence !== "cloudflare")
     throw new Error("Vercel requires Cloudflare persistence.");
+  const jobExecution = process.env.JOB_EXECUTION || "worker";
+  if (!["worker", "vercel-queue"].includes(jobExecution))
+    throw new Error("Invalid JOB_EXECUTION.");
+  if (process.env.VERCEL && jobExecution !== "vercel-queue")
+    throw new Error("Vercel requires durable queue execution.");
   // Runtime storage is mounted separately; do not include private data in build tracing.
   const dataDir = path.resolve(
     /* turbopackIgnore: true */ persistence === "cloudflare"
@@ -131,6 +137,7 @@ export function loadConfig(): ServerConfig {
   if (!["inline", "saved_test", "per_job"].includes(fishVoiceMode))
     throw new Error("FISH_VOICE_MODE must be inline, saved_test or per_job.");
   return {
+    jobExecution: jobExecution as "worker" | "vercel-queue",
     persistence: persistence as "local" | "cloudflare",
     cloudflareAccountId: process.env.CLOUDFLARE_ACCOUNT_ID || "",
     d1DatabaseId: process.env.CLOUDFLARE_D1_DATABASE_ID || "",
@@ -147,8 +154,16 @@ export function loadConfig(): ServerConfig {
       process.env.GEMINI_TTS_MODEL || "gemini-3.8-flash-lite-tts",
     fidelityTtsModel:
       process.env.GEMINI_HIGH_FIDELITY_TTS_MODEL || "gemini-3.8-flash-tts",
-    ffmpeg: process.env.FFMPEG_PATH || "ffmpeg",
-    ffprobe: process.env.FFPROBE_PATH || "ffprobe",
+    ffmpeg:
+      process.env.FFMPEG_PATH ||
+      (process.env.VERCEL
+        ? path.join(process.cwd(), "vendor/media/bin/ffmpeg")
+        : "ffmpeg"),
+    ffprobe:
+      process.env.FFPROBE_PATH ||
+      (process.env.VERCEL
+        ? path.join(process.cwd(), "vendor/media/bin/ffprobe")
+        : "ffprobe"),
     authIssuer: authIssuer ? authIssuer.replace(/\/$/, "") + "/" : "",
     authAudience:
       process.env.AUTH0_AUDIENCE ||
@@ -184,12 +199,16 @@ export function loadConfig(): ServerConfig {
     signupCreditsCap: positiveEnv("SIGNUP_CREDITS_CAP", 50),
     maxActiveJobs: positiveEnv("MAX_ACTIVE_JOBS", 20),
     maxQueueWaitMs: positiveEnv("MAX_QUEUE_WAIT_SECONDS", 600) * 1000,
-    maxJobRunMs: positiveEnv("MAX_JOB_RUN_SECONDS", 900) * 1000,
+    maxJobRunMs:
+      (jobExecution === "vercel-queue"
+        ? Math.min(positiveEnv("MAX_JOB_RUN_SECONDS", 240), 240)
+        : positiveEnv("MAX_JOB_RUN_SECONDS", 900)) * 1000,
     userDailySeconds: positiveEnv("USER_DAILY_AUDIO_SECONDS", 1800),
     globalDailySeconds: positiveEnv("GLOBAL_DAILY_AUDIO_SECONDS", 18000),
     dailyUploadBytes: positiveEnv("USER_DAILY_UPLOAD_BYTES", 500_000_000),
     acceptingJobs: process.env.PAUSE_NEW_JOBS !== "true",
     requireWorker:
+      jobExecution === "worker" &&
       process.env.NODE_ENV === "production" &&
       process.env.BACKEND_LOCAL !== "true",
     minFreeDiskBytes: positiveEnv(

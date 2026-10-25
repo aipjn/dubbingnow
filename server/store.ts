@@ -1026,11 +1026,13 @@ export class Store {
       return this.settleInside(row, status, result, error);
     });
   }
-  claim(): JobRow | undefined {
+  claim(jobId?: string): JobRow | undefined {
     return this.transaction(() => {
       this.recoverExpiredInside();
       for (const row of this.all<JobRow>(
-        "SELECT * FROM jobs WHERE status='queued' ORDER BY created LIMIT 20",
+        "SELECT * FROM jobs WHERE status='queued' AND (? IS NULL OR id=?) ORDER BY created LIMIT 20",
+        jobId ?? null,
+        jobId ?? null,
       )) {
         try {
           this.actor(row.owner);

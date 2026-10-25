@@ -15,8 +15,8 @@ export class Processor {
     readonly storage: PrivateStorage,
     private provider?: SpeechProvider,
   ) {}
-  async runOnce(): Promise<boolean> {
-    const row = await this.store.claim();
+  async runOnce(jobId?: string): Promise<boolean> {
+    const row = await this.store.claim(jobId);
     if (!row) return false;
     await this.process(row);
     return true;

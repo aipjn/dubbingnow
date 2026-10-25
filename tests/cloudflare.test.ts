@@ -78,6 +78,30 @@ async function fixture() {
   };
 }
 
+test("queue delivery claims only its target job and duplicate delivery cannot claim it twice", async () => {
+  const f = await fixture();
+  try {
+    const first = await f.store.createJob(
+      f.user,
+      await f.priced(),
+      randomUUID(),
+      true,
+    );
+    const second = await f.store.createJob(
+      f.user,
+      await f.priced(),
+      randomUUID(),
+      true,
+    );
+    assert.equal((await f.store.claim(second.id))?.id, second.id);
+    assert.equal(await f.store.claim(second.id), undefined);
+    assert.equal(await f.store.claim(randomUUID()), undefined);
+    assert.equal((await f.store.claim())?.id, first.id);
+  } finally {
+    await f.close();
+  }
+});
+
 test("D1 fence rolls back an entire stale batch; concurrent idempotency reserves credits once", async () => {
   const f = await fixture();
   try {

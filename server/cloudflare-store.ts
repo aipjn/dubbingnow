@@ -1078,11 +1078,13 @@ export class CloudflareStore {
       })
     ).value;
   }
-  async claim(): Promise<JobRow | undefined> {
+  async claim(jobId?: string): Promise<JobRow | undefined> {
     await this.recoverExpiredJobs();
     const { value: claimed } = await this.db.atomic(async (tx) => {
       for (const row of await this.all<JobRow>(
-        "SELECT * FROM jobs WHERE status='queued' ORDER BY created LIMIT 20",
+        "SELECT * FROM jobs WHERE status='queued' AND (? IS NULL OR id=?) ORDER BY created LIMIT 20",
+        jobId ?? null,
+        jobId ?? null,
       )) {
         try {
           await this.actor(row.owner);

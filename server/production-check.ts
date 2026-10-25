@@ -38,6 +38,10 @@ export function productionProblems(
     issues.push("BACKEND_DATA_DIR must be an absolute persistent directory.");
   if (env.VERCEL && env.PERSISTENCE_DRIVER !== "cloudflare")
     issues.push("Vercel requires PERSISTENCE_DRIVER=cloudflare.");
+  if (env.VERCEL && env.JOB_EXECUTION !== "vercel-queue")
+    issues.push("Vercel requires JOB_EXECUTION=vercel-queue.");
+  if (env.VERCEL && (env.CRON_SECRET?.length || 0) < 32)
+    issues.push("CRON_SECRET needs at least 32 characters for scheduled cleanup.");
   for (const key of ["BACKEND_PUBLIC_URL", "NEXT_PUBLIC_SITE_URL"]) {
     try {
       const url = new URL(env[key] || "");

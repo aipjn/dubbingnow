@@ -39,7 +39,9 @@ const config = (dir: string): ServerConfig => ({
   retentionMs: 86400000,
   maxSegments: 600,
 });
-async function fixture() {
+async function fixture(
+  options: { dispatchJob?: (id: string) => Promise<void> } = {},
+) {
   const dir = await mkdtemp(path.join(tmpdir(), "dubbing-backend-")),
     c = config(dir),
     store = new Store(c),
@@ -56,6 +58,7 @@ async function fixture() {
         };
       },
       verifyHuman: async () => {},
+      ...options,
     });
   return {
     dir,
@@ -168,6 +171,96 @@ async function priced(
   assert.equal(quote.response.status, 201, JSON.stringify(quote.body));
   return { ...input, quoteId: quote.body.id };
 }
+
+test("durable delivery is confirmed before accepting a task and repeated requests reserve credits once", async () => {
+  const delivered: string[] = [];
+  const f = await fixture({
+    dispatchJob: async (id) => {
+      delivered.push(id);
+    },
+  });
+  try {
+    const input = await priced(f.backend),
+      key = randomUUID();
+    const first = await call(f.backend, "POST", "jobs", "user", input, key);
+    const second = await call(f.backend, "POST", "jobs", "user", input, key);
+    assert.equal(first.response.status, 202);
+    assert.equal(second.body.id, first.body.id);
+    assert.deepEqual(delivered, [first.body.id, first.body.id]);
+    const history = await f.store.history(
+      f.store.ensureUser({
+        issuer: f.c.authIssuer,
+        subject: "user",
+        email: "user@example.test",
+        name: "user",
+      }),
+    );
+    assert.equal(
+      history.items.filter((entry) => entry.type === "reserve").length,
+      1,
+    );
+  } finally {
+    await f.close();
+  }
+});
+
+test("queue publication failure cancels an unstarted task and returns its full reservation", async () => {
+  const f = await fixture({
+    dispatchJob: async () => {
+      throw new Error("queue unavailable");
+    },
+  });
+  try {
+    const input = await priced(f.backend);
+    const before = (await call(f.backend, "GET", "quota", "user")).body;
+    const result = await call(
+      f.backend,
+      "POST",
+      "jobs",
+      "user",
+      input,
+      randomUUID(),
+    );
+    assert.equal(result.response.status, 503);
+    assert.equal(result.body.error.retryable, true);
+    const after = (await call(f.backend, "GET", "quota", "user")).body;
+    assert.equal(after.availableCredits, before.availableCredits);
+    assert.equal(after.reservedCredits, 0);
+    assert.equal(
+      f.store.get<{ status: string }>("SELECT status FROM jobs")?.status,
+      "cancelled",
+    );
+  } finally {
+    await f.close();
+  }
+});
+
+test("an ambiguous publish response never cancels work already claimed by a consumer", async () => {
+  const f = await fixture({
+    dispatchJob: async (id) => {
+      assert.equal(f.store.claim(id)?.id, id);
+      throw new Error("response lost");
+    },
+  });
+  try {
+    const input = await priced(f.backend);
+    const result = await call(
+      f.backend,
+      "POST",
+      "jobs",
+      "user",
+      input,
+      randomUUID(),
+    );
+    assert.equal(result.response.status, 202);
+    assert.equal(result.body.status, "transcribing");
+    assert.ok(
+      (await call(f.backend, "GET", "quota", "user")).body.reservedCredits > 0,
+    );
+  } finally {
+    await f.close();
+  }
+});
 
 test("Fish clone jobs need only the source upload and reuse the fixed voice across short jobs without creating or deleting models", async () => {
   const f = await fixture();

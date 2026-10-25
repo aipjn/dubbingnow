@@ -1,6 +1,7 @@
 import { getBackend } from "@/server/backend";
 import { randomUUID } from "node:crypto";
 export const runtime = "nodejs";
+export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 async function handle(
   request: Request,

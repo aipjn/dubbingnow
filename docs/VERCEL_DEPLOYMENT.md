@@ -1,32 +1,40 @@
 # dubbingnow.com 与 Vercel 部署
 
-已确认的网站域名为 `dubbingnow.com`，GitHub 仓库为 `https://github.com/aipjn/dubbingnow`，目标托管平台为 Vercel。
+域名 `dubbingnow.com`，源码仓库 `aipjn/dubbingnow`。网页、API、后台队列消费者部署在同一个 Vercel 项目；用户、积分、任务仍保存到 Cloudflare D1，音频仍在私有 R2。
 
-持久存储已实现 Cloudflare D1 + 私有 R2，详见 [Cloudflare 接入说明](CLOUDFLARE_STORAGE.md)。后台任务仍需要 Node/FFmpeg 执行环境，通过网页构建不等于配音服务已经上线。
+## 执行方式
 
-## 当前部署边界
+- 生产设置 `JOB_EXECUTION=vercel-queue`、`PERSISTENCE_DRIVER=cloudflare`、`BACKEND_LOCAL=false`。Vercel 环境缺少队列配置时拒绝初始化，避免只上线页面却没有处理程序。
+- API 在 D1 建任务和预扣积分后，发布仅包含任务 ID 的队列消息；成功发布后才返回 202。发布失败且任务尚未被消费者领取时取消任务并退款。请求重复发布使用任务 ID 去重，D1 也保留任务/扣款幂等性。
+- Vercel Queues 私有消费者按指定任务 ID 领取 D1 租约，运行原 Google + Fish inline 管线。重复消息不会重新领取已处理任务；租约和结算继续由 D1 保证。
+- 浏览器不参与后台执行。关闭页面后，消费者继续生成结果，用户重新登录后可由账户记录访问结果。
+- 函数上限设置 300 秒，处理管线在 240 秒内主动中断并结算失败退款，预留退出和数据库结算时间。进程崩溃后，过期租约仍通过现有 D1 恢复逻辑退款；不声称进程中断后能从半句合成处恢复。
+- 完成或失败后，队列另发延迟清理消息，按现有 24 小时保留策略删除音频。每日一次受 `CRON_SECRET` 保护的清理用于孤立上传、过期记录和异常回收；独立上传后弃用的音频可能保留至下一次每日清理。下载访问仍按原 24 小时失效。
 
-| 部分                           | 当前实现                   | Vercel 上的处理                                |
-| ------------------------------ | -------------------------- | ---------------------------------------------- |
-| 网页、SEO、浏览器音视频处理    | Next.js 与浏览器 worker    | 可以部署                                       |
-| 用户、积分、任务队列、音色记录 | Cloudflare D1（已实现）    | 配置服务凭据并初始化数据库                     |
-| 源音频与配音结果               | 私有 R2（已实现）          | 配置对象读写凭据、CORS，浏览器直传             |
-| 配音任务                       | 独立 Node worker 与 FFmpeg | 需要后台任务运行环境；不能只启动 Next 页面服务 |
+本地开发和原独立服务器继续使用默认 `JOB_EXECUTION=worker` 与 `npm run worker`。两种模式都保留相同的持久存储和积分结算逻辑。生产队列模式不依赖常驻 worker 心跳。
 
-Vercel Functions 的本地存储是临时的。本次 Cloudflare 模式只把 FFmpeg 的可丢弃工作文件放在临时目录，数据库、音色记录和结果均不依赖它。音频上传直接到 R2，结果下载从 API 验权后跳转到 R2，避开普通函数 4.5 MB 请求/响应体限制。
+## FFmpeg 与临时文件
 
-## 剩余部署工作
+`npm run build` 在 Vercel 构建机上从 FFmpeg 官方固定 8.0.3 源码、校验固定 SHA256 后构建。仅启用本项目需要的音频解码、编码、重采样、变速与对齐，关闭网络协议。构建缓存位于 `.next/cache`，发布文件位于生成的 `vendor/media/bin`，通过 Next 输出追踪打包到 API 和消费者函数。
 
-当前选定 D1 + R2 路径，保留 Google + Fish。资源已创建，R2 按用户确认的按量计费订阅开通。代码适配与 R2 CORS 已完成；还需要配置服务凭据、初始化 D1，并进行真实云端验收。
+可执行文件不进入 Git，也不上传本机生成的 macOS 二进制；远程部署重新构建匹配 Linux 平台的版本。构建阶段验证实际解码和对齐。函数仅将可丢弃音频工作文件放在 `/tmp`，D1/R2 不依赖本机磁盘。
 
-网页/API 可以部署到 Vercel；配音仍由独立 Node worker 执行。需要选择并配置能运行 Node/FFmpeg 的后台环境，使用相同的 Cloudflare 与供应商环境变量。Vercel Daemons、Container Functions 或 Sandbox 等能力须在实际账号与项目中单独验证，当前没有部署或声称已跑通本项目。不能只启动 Next 服务并假设 worker 会自动运行，也不能依赖浏览器页面维持任务。
+浏览器直传 R2，下载由 API 验权后跳转至短期 R2 签名地址，避免将大音频穿过普通函数请求/响应体。
 
-如先验证界面，可以在单独的 Vercel Preview 明确设置 `NEXT_PUBLIC_API_BASE_URL=` 使用演示模式；它只返回样例结果，不能作为真实配音上线验收。正式公开配置必须在构建前填写，Auth0/Turnstile 也需绑定实际域名。
+## 配置与发布
 
-Git 与本地 Vercel 上传均排除 `.env.local`、`.data`、`.runtime`、`.vercel`、依赖目录与测试结果。供应商私钥放在实际运行后端的环境配置中，不上传 GitHub。
+- 公开配置在构建前填写：网站 origin、同源 API `/`、Auth0 domain/client/audience、Turnstile site key、客服邮箱与运营名称。
+- 后台私有配置：Cloudflare、Google、Fish、存储签名密钥和 `CRON_SECRET`。不得提交 Git；本机准备文件也位于忽略目录。
+- 不将本机代理、临时目录、FFmpeg 路径或固定测试音色 ID 写入生产环境。
+- 将根域名和 www 绑定实际 Vercel 项目，再根据该项目显示的目标更新 Cloudflare DNS。不得猜测项目专用记录。
+- 发布验收必须检查真实 HTTPS、登录回调、Turnstile、上传、队列执行、积分与结果下载。源码构建通过不能替代云端队列与 Linux 函数的实测。
 
-## 官方依据（2026-10-24 核对）
+2026-10-25 本轮已通过本机构建、类型检查、精简媒体运行时的原自动测试，以及真实 Google/Fish + D1/R2 短音频测试。Vercel CLI 设备授权和实际发布仍待完成，尚未声称网站已上线。
 
-- [Vercel 的 SQLite 与临时存储说明](https://vercel.com/kb/guide/is-sqlite-supported-in-vercel)
-- [Vercel Functions 上传限制](https://vercel.com/docs/functions/limitations#request-body-size)
-- [Vercel Daemons 与临时存储限制](https://vercel.com/docs/daemons#what-does-the-daemons-beta-support)
+## 官方依据（2026-10-25 核对）
+
+- [Vercel Queues 快速接入及私有消费者](https://vercel.com/docs/queues/quickstart)
+- [队列 SDK、消息去重与重投](https://vercel.com/docs/queues/sdk)
+- [Vercel 函数限制](https://vercel.com/docs/functions/limitations)
+- [队列价格与额度](https://vercel.com/docs/queues/pricing)
+- [FFmpeg 官方源码下载](https://ffmpeg.org/download.html)
