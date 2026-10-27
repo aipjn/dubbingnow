@@ -18,8 +18,8 @@ export default function Contact() {
         </p>
       ) : (
         <p>
-          Public support has not been configured yet. If you are testing this
-          service, contact the person who provided your testing link.
+          Support contact information is currently unavailable. Please try again
+          later.
         </p>
       )}
       <p>

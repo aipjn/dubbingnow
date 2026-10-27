@@ -28,8 +28,8 @@ export function DubbingGuide() {
             narrator using clear reference speech from the upload.
           </p>
           <p>
-            This release is for clear, single-speaker recordings. A solo lesson,
-            a product explanation, or a narrated screen recording is a suitable
+            DubbingNow is for clear, single-speaker recordings. A solo lesson, a
+            product explanation, or a narrated screen recording is a suitable
             starting point. Interviews with several speakers, group discussions,
             and overlapping conversations are outside the supported workflow.
             The tool does not edit mouth movements or translate text embedded in

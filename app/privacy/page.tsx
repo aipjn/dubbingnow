@@ -13,29 +13,25 @@ export default function Privacy() {
       <h1>Privacy notice.</h1>
       <p className="article-lead">
         {operatorName} processes recordings to translate and generate a new
-        voice track. The sections below distinguish the connected service from
-        its demonstration mode.
+        voice track. This notice explains how recordings, account information,
+        and processing requests are handled.
       </p>
-      <h2>Demo recordings</h2>
+      <h2>Recordings and processing</h2>
       <p>
-        When no live service is configured, selected recordings remain on your
-        device. The demo does not upload them or submit them to AI providers.
-        Result previews use a fixed sample.
+        Only the audio needed for dubbing is uploaded to private storage using
+        time-limited upload authorization. Original videos remain on your
+        device. The translated audio can be combined with the original video
+        locally in your browser.
       </p>
-      <h2>Connected service</h2>
+      <h2>Processing providers and voice cloning</h2>
       <p>
-        When a live service is configured, only audio is sent directly to
-        private storage using time-limited upload authorization. Original videos
-        remain on your device. Processing requests are sent to that service.
         Google receives audio for transcription and translation. Fish Audio
         receives selected reference speech and translated text for cloned speech
-        generation. The default cloning path sends reference speech with each
-        synthesis request and does not register a saved voice model. Reference
-        identifiers stay within the task. The separate single-voice test mode
-        reuses an existing test voice. If the operator enables Google cloning
-        instead, its required consent recording is sent to Google for
-        verification. Auth0 handles sign-in, and Cloudflare Turnstile handles
-        guest verification.
+        generation. When you choose voice cloning, reference speech comes from
+        the narrator in your upload. This workflow sends the reference with
+        speech-generation requests and does not register a saved voice model.
+        Google generates speech when you choose a preset voice. Auth0 handles
+        sign-in, and Cloudflare Turnstile handles guest verification.
       </p>
       <h2>Storage and removal</h2>
       <p>
@@ -47,18 +43,15 @@ export default function Privacy() {
       </p>
       <p>
         Account information, task records and credit transactions are stored
-        separately. If saved-model cloning or the single-voice test mode is
-        enabled, voice records and provider-hosted saved voices are not removed
-        automatically with the audio. Operational backups may retain account and
-        saved-voice records. Request removal through the contact below; the
+        separately from audio files. Operational backups may retain account and
+        transaction records. Request data removal through the contact below; the
         service currently handles these requests manually. Provider handling of
         submitted data is also subject to each provider's policies.
       </p>
       <h2>Browser storage</h2>
       <p>
-        The connected frontend stores an anonymous session token in local
-        storage and task recovery identifiers in session storage. These support
-        your allowance, processing status, and checkout. Video recovery also
+        Your browser stores session and task recovery information to support
+        sign-in, your allowance, and processing status. Video recovery also
         stores file details without storing the video itself. After refreshing,
         select the same original video to restore your video download.
       </p>
@@ -67,7 +60,7 @@ export default function Privacy() {
         {supportEmail ? (
           <a href={`mailto:${supportEmail}`}>{supportEmail}</a>
         ) : (
-          "Public support contact has not been configured. Public launch is pending this information."
+          "Support contact information is currently unavailable. Please try again later."
         )}
       </p>
     </article>

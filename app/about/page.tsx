@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "About DubbingNow",
   description:
-    "One recording, more audiences. Learn what DubbingNow is being built to do.",
+    "Translate single-speaker videos and audio with DubbingNow. Learn about voice cloning, preset voices, and supported recording types.",
   alternates: { canonical: "/about" },
 };
 export default function About() {
@@ -26,12 +26,12 @@ export default function About() {
       </p>
       <h2>Choose the voices for your story</h2>
       <p>
-        Choose preset voices or try cloning preview using reference speech from
-        your recording. The default cloning workflow uses the narrator from each
-        upload. Quality varies with the source and target language, so listen to
-        the result before sharing it.
+        Choose a preset voice or use voice cloning with reference speech from
+        your recording. Voice cloning uses the narrator from each upload.
+        Quality varies with the source and target language, so listen to the
+        result before sharing it.
       </p>
-      <h2>Where we are today</h2>
+      <h2>Supported recordings</h2>
       <p>
         This release is for one clear speaker per recording. Multi-speaker
         conversations, lip-sync editing, and translated on-screen text are not

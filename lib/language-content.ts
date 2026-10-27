@@ -68,7 +68,7 @@ export const languageContent: Record<string, LanguageContent | undefined> = {
       ],
       [
         "Can I use a multi-speaker Spanish interview?",
-        "This release supports clear recordings with one speaker. A multi-person interview, even with speakers taking turns, is outside the supported workflow. Overlapping conversations are not supported.",
+        "DubbingNow supports clear recordings with one speaker. A multi-person interview, even with speakers taking turns, is outside the supported workflow. Overlapping conversations are not supported.",
       ],
       [
         "Can I translate Spanish narration into English?",
@@ -134,7 +134,7 @@ export const languageContent: Record<string, LanguageContent | undefined> = {
       ],
       [
         "Is Portuguese dubbing suitable for a two-person podcast?",
-        "The supported input is a clear recording with one speaker. Two-person podcasts and overlapping conversations are outside this release. A solo introduction or a separately prepared single-narrator episode is a suitable starting point.",
+        "The supported input is a clear recording with one speaker. Two-person podcasts and overlapping conversations are outside the supported workflow. A solo introduction or a separately prepared single-narrator episode is a suitable starting point.",
       ],
       [
         "Can I translate a Portuguese recording into Spanish?",
@@ -195,11 +195,11 @@ export const languageContent: Record<string, LanguageContent | undefined> = {
       ],
       [
         "Can I choose a Hinglish style or control individual pronunciations?",
-        "There is no Hinglish style switch or pronunciation dictionary in this release. Check English terms, names, and numbers in the actual audio with a Hindi-speaking reviewer before publishing.",
+        "There is no Hinglish style switch or pronunciation dictionary in the current tool. Check English terms, names, and numbers in the actual audio with a Hindi-speaking reviewer before publishing.",
       ],
       [
         "Can I dub a Hindi conversation with several people?",
-        "This release is for one clear speaker per recording. Group discussions, interviews with multiple speakers, and overlapping conversations are not supported. Use a single-narrator explanation instead.",
+        "DubbingNow is for one clear speaker per recording. Group discussions, interviews with multiple speakers, and overlapping conversations are not supported. Use a single-narrator explanation instead.",
       ],
       [
         "Can Hindi be the original language?",

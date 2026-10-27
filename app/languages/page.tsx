@@ -19,7 +19,7 @@ export default function LanguagesPage() {
         <p>
           Choose the next language for your video or audio.
           <br />
-          Explore our planned language collection.
+          Explore 12 supported languages for clear, single-speaker recordings.
         </p>
       </section>
       <section className="container language-grid">
@@ -39,8 +39,8 @@ export default function LanguagesPage() {
         ))}
       </section>
       <p className="container catalog-note">
-        Language availability in the tool is supplied by the dubbing service.
-        This preview includes the planned catalog.
+        Choose a source and target language in the tool. Review translated
+        speech for meaning, pronunciation, and timing before sharing it.
       </p>
     </>
   );

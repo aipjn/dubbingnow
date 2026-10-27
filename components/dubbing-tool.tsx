@@ -1047,12 +1047,11 @@ function DubbingToolContent({
                         <option
                           value="clone"
                           disabled={
-                            capabilities?.voiceCloning?.enabled === false
+                            capabilities?.voiceCloning?.enabled === false ||
+                            capabilities?.voiceCloning?.singleVoiceTest === true
                           }
                         >
-                          {capabilities?.voiceCloning?.singleVoiceTest
-                            ? "Clone voice (saved test voice)"
-                            : "Clone original voices (preview)"}
+                          Clone original voice
                         </option>
                       </select>
                       <ChevronDown size={14} />
@@ -1060,17 +1059,15 @@ function DubbingToolContent({
                     {voiceMode === "clone" &&
                       capabilities?.voiceCloning?.singleVoiceTest && (
                         <p className="clone-consents">
-                          Testing with one saved voice. The first voice is saved
-                          and reused for later tests. Choose a single-speaker
-                          recording.
+                          Voice cloning is currently unavailable. Choose a
+                          preset voice to continue.
                         </p>
                       )}
                     {capabilities?.maxSpeakers === 1 &&
                       !capabilities?.voiceCloning?.singleVoiceTest && (
                         <p className="clone-consents">
-                          For this release, choose a clear recording with one
-                          speaker. Background music is replaced by the new voice
-                          track.
+                          Choose a clear recording with one speaker. Background
+                          music is replaced by the new voice track.
                         </p>
                       )}
                     {voiceMode === "clone" &&
@@ -1169,8 +1166,8 @@ function DubbingToolContent({
                     !!pending ||
                     (!demo &&
                       voiceMode === "clone" &&
-                      consentRequired &&
-                      consentFiles.some((f) => !f)) ||
+                      (capabilities?.voiceCloning?.singleVoiceTest ||
+                        (consentRequired && consentFiles.some((f) => !f)))) ||
                     (quota.kind === "guest"
                       ? !trialVerified
                       : quota.availableCredits <

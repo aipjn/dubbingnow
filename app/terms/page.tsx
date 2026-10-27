@@ -16,18 +16,19 @@ export default function Terms() {
         generation. Availability and limits are shown before you submit a
         recording.
       </p>
-      <h2>What the demo does</h2>
+      <h2>How dubbing works</h2>
       <p>
-        The demonstration shows the upload, language selection, processing, and
-        result flow. It does not translate your selected recording, and
-        purchases are disabled.
+        DubbingNow transcribes and translates spoken narration, generates a new
+        voice track, and aligns it with the original recording. Choose a preset
+        voice or use voice cloning with reference speech from your uploaded
+        recording. Review the result before publishing it.
       </p>
       <h2>Recordings you provide</h2>
       <p>
         Only submit recordings you have permission to use and translate. This
-        service is initially intended for clear, single-speaker recordings. The
-        separate single-voice test mode uses one saved test voice. Cloning
-        quality varies with the reference recording and target language.
+        service supports clear, single-speaker recordings. Only clone a voice
+        you have permission to use. Cloning quality varies with the reference
+        recording and target language.
       </p>
       <h2>Review translated content</h2>
       <p>
@@ -39,8 +40,9 @@ export default function Terms() {
       <p>
         Credits are reserved when a task is accepted, consumed on completion,
         and returned if the task fails or is cancelled. Processing and upload
-        attempts still count toward daily usage limits. Purchases remain
-        disabled until payment services and final commercial terms are enabled.
+        attempts still count toward daily usage limits. Paid credit purchases
+        are not currently available. Current allowances and credit rates are
+        shown in the tool and on the pricing page.
       </p>
       <h2>Outputs and support</h2>
       <p>
@@ -56,7 +58,7 @@ export default function Terms() {
             help.
           </>
         ) : (
-          "Public support details are still required before launch."
+          "Support contact information is currently unavailable. Please try again later."
         )}
       </p>
     </article>

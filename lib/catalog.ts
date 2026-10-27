@@ -68,7 +68,7 @@ export const tools = [
     description:
       "Auto dubbing for clear, single-speaker recordings — translate and dub your narration in one workflow.",
     intro:
-      "Auto dubbing is for clear, single-speaker recordings. It brings transcription, translation, and speech generation into one workflow, so you can adapt a narrated recording without exporting every line yourself. Multi-speaker interviews and overlapping conversations are not supported in this release.",
+      "Auto dubbing is for clear, single-speaker recordings. It brings transcription, translation, and speech generation into one workflow, so you can adapt a narrated recording without exporting every line yourself. Multi-speaker interviews and overlapping conversations are not supported in the current tool.",
     accept: "all" as const,
     icon: "sparkles",
     use: "A complete recording, translated in one workflow.",
@@ -83,7 +83,7 @@ export const tools = [
       ],
       [
         "Does auto dubbing copy the original voice?",
-        "Choose cloning preview to use the original speaker’s voice, using clean reference speech from the recording. Preset voices are also available.",
+        "Choose voice cloning to use the original speaker’s voice, using clean reference speech from the recording. Preset voices are also available.",
       ],
     ],
   },
@@ -129,11 +129,11 @@ export const tools = [
     faqs: [
       [
         "What happens when there are several speakers?",
-        "This release supports one clear speaker per recording. Multi-speaker recordings and overlapping conversations are not supported, even when speakers take turns.",
+        "DubbingNow supports one clear speaker per recording. Multi-speaker recordings and overlapping conversations are not supported, even when speakers take turns.",
       ],
       [
         "Can I clone a voice?",
-        "Choose cloning preview to use clear reference speech from the speaker in your uploaded recording. Include a clean 10–30 second passage. Quality varies with the recording and the target language; review the result before sharing it.",
+        "Choose voice cloning to use clear reference speech from the speaker in your uploaded recording. Include a clean 10–30 second passage. Quality varies with the recording and the target language; review the result before sharing it.",
       ],
       [
         "What about overlapping speech?",
@@ -181,7 +181,7 @@ export const commonFaqs: [string, string][] = [
   ],
   [
     "Can I dub a video with multiple speakers?",
-    "No. This release supports clear recordings with one speaker. Multi-speaker interviews, group conversations, and overlapping speech are not supported. Choose a solo narration or prepare a separate single-narrator recording before uploading.",
+    "No. DubbingNow supports clear recordings with one speaker. Multi-speaker interviews, group conversations, and overlapping speech are not supported. Choose a solo narration or prepare a separate single-narrator recording before uploading.",
   ],
   [
     "What can I try for free?",
@@ -189,7 +189,7 @@ export const commonFaqs: [string, string][] = [
   ],
   [
     "Does DubbingNow preserve the original speaker’s voice?",
-    "Choose cloning preview to use reference speech from the original narrator in your upload. Include a clear 10–30 second passage without other voices or loud music. Cloning quality varies by source and target language, so compare the result with your original. Preset voices are also available; lip-sync editing is not included.",
+    "Choose voice cloning to use reference speech from the original narrator in your upload. Include a clear 10–30 second passage without other voices or loud music. Cloning quality varies by source and target language, so compare the result with your original. Preset voices are also available; lip-sync editing is not included.",
   ],
   [
     "What happens to my uploaded files?",
