@@ -63,12 +63,12 @@ export const tools = [
   {
     slug: "auto-dubbing",
     name: "Auto Dubbing",
-    title: "Auto Dubbing - Dub Full Videos Automatically | DubbingNow",
+    title: "Auto Dubbing for Single-Speaker Recordings | DubbingNow",
     eyebrow: "LESS EDITING. MORE CREATING.",
     description:
-      "Upload clear narration — translate and dub it in one workflow.",
+      "Auto dubbing for clear, single-speaker recordings — translate and dub your narration in one workflow.",
     intro:
-      "Auto dubbing brings transcription, translation, and speech generation into one workflow. With automatic dubbing, you can adapt a complete recording without exporting every line yourself.",
+      "Auto dubbing is for clear, single-speaker recordings. It brings transcription, translation, and speech generation into one workflow, so you can adapt a narrated recording without exporting every line yourself. Multi-speaker interviews and overlapping conversations are not supported in this release.",
     accept: "all" as const,
     icon: "sparkles",
     use: "A complete recording, translated in one workflow.",
@@ -93,7 +93,7 @@ export const tools = [
     title: "AI Video Dubbing - Dub Videos with AI | DubbingNow",
     eyebrow: "YOUR NEXT AUDIENCE IS EVERYWHERE.",
     description:
-      "Translate the voices. Keep the story. Bring your videos to a new audience.",
+      "AI video dubbing for clear, single-speaker recordings. Translate the narration and bring your video to a new audience.",
     intro:
       "AI video dubbing is designed for video creators, educators, and teams adapting visual content. Choose an MP4 or MOV and a target language, then preview and download your dubbed video on this page.",
     accept: "video" as const,
@@ -118,9 +118,9 @@ export const tools = [
     slug: "voice-dubbing",
     name: "Voice Dubbing",
     title: "Voice Dubbing - Dub Voices in Any Language | DubbingNow",
-    eyebrow: "EVERY SPEAKER HAS A VOICE.",
+    eyebrow: "ONE VOICE. MORE POSSIBILITIES.",
     description:
-      "Bring your narration across languages with a consistent voice.",
+      "Voice dubbing for clear, single-speaker recordings, using a preset voice or a clone of your narrator.",
     intro:
       "Voice dubbing helps adapt narrated content. Choose a preset voice or clone the original voice using clean reference speech from the recording.",
     accept: "all" as const,
@@ -129,15 +129,15 @@ export const tools = [
     faqs: [
       [
         "What happens when there are several speakers?",
-        "The first release is intended for one speaker per recording. Overlapping conversations are not supported. A separate single-voice test mode reuses one saved voice.",
+        "This release supports one clear speaker per recording. Multi-speaker recordings and overlapping conversations are not supported, even when speakers take turns.",
       ],
       [
         "Can I clone a voice?",
-        "Cloning preview is available through the connected service. The source must contain enough clear, natural speech for the first voice. During testing, that saved voice is reused.",
+        "Choose cloning preview to use clear reference speech from the speaker in your uploaded recording. Include a clean 10–30 second passage. Quality varies with the recording and the target language; review the result before sharing it.",
       ],
       [
         "What about overlapping speech?",
-        "People speaking over one another can reduce recognition quality. Clear turn-taking produces more reliable results.",
+        "Overlapping speech is not supported. Use one narrator per recording, without other voices or music competing with the narration.",
       ],
     ],
   },
@@ -147,7 +147,7 @@ export const tools = [
     title: "Audio Dubbing - Dub Audio Files Online | DubbingNow",
     eyebrow: "BIG IDEAS. NO LANGUAGE BARRIER.",
     description:
-      "Give your podcast, lesson, or voice recording a new language.",
+      "Audio dubbing for clear, single-speaker recordings: solo podcasts, lessons, and voice recordings.",
     intro:
       "Audio dubbing translates recordings without a video track. Upload MP3 or WAV audio, choose the language for your listeners, and preview or download the resulting audio here.",
     accept: "audio" as const,
@@ -173,26 +173,26 @@ export const tools = [
 export const commonFaqs: [string, string][] = [
   [
     "How do I dub a video into another language?",
-    "Upload your recording, select the source and target languages, and start dubbing. The workflow transcribes the speech, translates it, generates the selected voices, and aligns the new audio. Preview and download the result on the same page.",
+    "Choose a clear recording with one speaker, select the source and target languages, and start dubbing. The workflow transcribes and translates the narration, generates a preset or cloned voice, and aligns the new audio. Review the result on the same page before downloading it.",
   ],
   [
     "Do I need an account to get started?",
-    "No. You can try a short recording after human verification. The tool shows the trial duration and your remaining uses. In demo mode, the result is a fixed sample.",
+    "No. A guest can try a short recording after human verification. The tool shows the current trial duration and remaining uses before you start. Sign in to use account credits and see your account’s processing records; the guest allowance and account credits are separate.",
   ],
   [
     "Can I dub a video with multiple speakers?",
-    "The first release is intended for clear recordings with one speaker. Overlapping conversations are not supported.",
+    "No. This release supports clear recordings with one speaker. Multi-speaker interviews, group conversations, and overlapping speech are not supported. Choose a solo narration or prepare a separate single-narrator recording before uploading.",
   ],
   [
     "What can I try for free?",
-    "Try a short recording without an account after human verification. New accounts receive free credits once. See the pricing page for current trial limits and credit rates. Preview mode has no paid transactions.",
+    "Guests can use a limited short-recording trial after human verification. Eligible new accounts receive a one-time credit gift. The tool displays your allowance and quotes the credit cost before processing. Failed or cancelled jobs return their reserved credits. See Pricing for current limits and rates.",
   ],
   [
     "Does DubbingNow preserve the original speaker’s voice?",
-    "Choose cloning preview with clean reference speech from your recording. During testing, one saved voice is reused. Cloning quality is still being evaluated; preset voices remain available. Lip-sync editing is not provided.",
+    "Choose cloning preview to use reference speech from the original narrator in your upload. Include a clear 10–30 second passage without other voices or loud music. Cloning quality varies by source and target language, so compare the result with your original. Preset voices are also available; lip-sync editing is not included.",
   ],
   [
     "What happens to my uploaded files?",
-    "In demo mode, files stay on your device. The connected service uploads audio privately and keeps results for 24 hours after completion. Download links are time-limited; see the privacy notice for source and voice retention.",
+    "Original videos stay on your device; only the audio needed for dubbing is uploaded to private storage and sent for processing. Results are available for 24 hours after completion, with time-limited download links. Download the result before it expires. See the privacy notice for the full retention and provider details.",
   ],
 ];

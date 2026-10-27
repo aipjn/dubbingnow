@@ -9,7 +9,7 @@ export const dynamicParams = false;
 export const metadata: Metadata = {
   title: "Prepare Your Video for AI Dubbing | DubbingNow",
   description:
-    "Improve your dubbing input with clearer dialogue, fewer overlapping speakers, and a review checklist.",
+    "Prepare clear, single-speaker video for AI dubbing, with practical checks for narration, names, translation, and timing.",
   alternates: { canonical: "/blog/preparing-a-video-for-dubbing" },
 };
 export default async function BlogPost({
@@ -39,11 +39,12 @@ export default async function BlogPost({
           dialogue, lower it in your original edit. Avoid heavy reverb and
           clipping, which can make short words and names hard to recognize.
         </p>
-        <h2>Give each speaker a turn</h2>
+        <h2>Use one narrator per recording</h2>
         <p>
-          Overlapping speech is harder to transcribe and separate. For
-          interviews, a short pause between speakers can improve both the
-          original recording and the translated version.
+          This release supports one clear speaker per recording. Multi-speaker
+          interviews and overlapping conversations are not supported, even if
+          speakers take turns. Start with a solo narration or prepare a new
+          single-narrator explanation of the material.
         </p>
         <h2>Check names and specialist language</h2>
         <p>

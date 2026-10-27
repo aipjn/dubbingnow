@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "DubbingNow - AI Dubbing Online, Dub Videos in Any Language",
   description:
-    "Dub clear narration into another language with one upload, with audio and video preview on the same page.",
+    "AI dubbing for clear, single-speaker videos and audio. Translate into 12 languages, choose a cloned or preset voice, and preview your dub online.",
   openGraph: { type: "website", siteName: "DubbingNow", locale: "en_US" },
   twitter: { card: "summary_large_image" },
   robots: { index: true, follow: true },

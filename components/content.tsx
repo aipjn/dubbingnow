@@ -20,46 +20,51 @@ const icons = {
   mic: Mic2,
   headphones: Headphones,
 };
-export function HowItWorks() {
+export function HowItWorks({
+  title = "Three steps. A world of possibilities.",
+  description = "A simple workflow for clear, single-speaker recordings.",
+  steps = [
+    [
+      "One recording in.",
+      "Choose a video or audio file with one clear speaker and little background noise.",
+    ],
+    [
+      "Choose your language.",
+      "Select the target language and a preset or cloned voice. We translate the narration and generate a new voice track.",
+    ],
+    [
+      "A new audience out.",
+      "Listen to the translated audio, check the timing, and download your result.",
+    ],
+  ],
+}: {
+  title?: string;
+  description?: string;
+  steps?: readonly (readonly [string, string])[];
+} = {}) {
   return (
     <section className="section container" id="how-it-works">
       <div className="section-heading">
         <span className="eyebrow">FROM UPLOAD TO A NEW AUDIENCE</span>
-        <h2>Three steps. A world of possibilities.</h2>
-        <p>Less time on the timeline. More time on your next big idea.</p>
+        <h2>{title}</h2>
+        <p>{description}</p>
       </div>
       <div className="steps-grid">
-        {[
-          {
-            icon: Upload,
-            title: "One recording in.",
-            description:
-              "Drop in your video or audio. Leave the speaker-by-speaker prep behind.",
-          },
-          {
-            icon: Globe2,
-            title: "Choose your language.",
-            description:
-              "Pick where your story goes next. We’ll translate the speech and create the voices.",
-          },
-          {
-            icon: Headphones,
-            title: "A new audience out.",
-            description:
-              "Preview the dub right here, then download it and share your story.",
-          },
-        ].map((step, index) => (
-          <div className="step" key={step.title}>
-            <div className="step-top">
-              <span className="step-icon">
-                <step.icon size={24} />
-              </span>
-              <span className="step-number">0{index + 1}</span>
+        {steps.map(([heading, text], index) => {
+          const Icon = [Upload, Globe2, Headphones][index % 3];
+          return (
+            <div className="step" key={heading}>
+              <div className="step-top">
+                <span className="step-icon">
+                  <Icon size={24} />
+                </span>
+                <span className="step-number">0{index + 1}</span>
+              </div>
+              <h3>{heading}</h3>
+              <p>{text}</p>
             </div>
-            <h3>{step.title}</h3>
-            <p>{step.description}</p>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
@@ -133,8 +138,10 @@ export function WhySection() {
     <section className="section container">
       <div className="section-heading">
         <span className="eyebrow">WHY DUBBINGNOW</span>
-        <h2>Your whole video. All its voices.</h2>
-        <p>Built around the way you create, with a little less friction.</p>
+        <h2>One voice, done right.</h2>
+        <p>
+          For clear, single-speaker recordings, from upload to translated audio.
+        </p>
       </div>
       <div className="feature-grid">
         {[
@@ -177,7 +184,9 @@ export function LanguageSection() {
             Your next audience speaks
             <br />a different language.
           </h2>
-          <p>Explore the languages planned for DubbingNow.</p>
+          <p>
+            Explore 12 languages for single-speaker video and audio dubbing.
+          </p>
         </div>
         <div className="language-chips">
           {languages.slice(0, 8).map((lang) => (
@@ -201,15 +210,17 @@ export function LanguageSection() {
 export function ToolLinks({
   exclude,
   limit = 4,
+  title = "A little less work. A little more reach.",
 }: {
   exclude?: string;
   limit?: number;
+  title?: string;
 }) {
   return (
     <section className="section container tools-section">
       <div className="section-heading align-left">
         <span className="eyebrow">FIND YOUR WORKFLOW</span>
-        <h2>A little less work. A little more reach.</h2>
+        <h2>{title}</h2>
       </div>
       <div className={`tools-grid ${limit === 3 ? "three-tools" : ""}`}>
         {tools
@@ -238,17 +249,23 @@ export function ToolLinks({
 }
 export function Faq({
   items = commonFaqs,
+  title,
 }: {
   items?: readonly (readonly string[])[];
+  title?: string;
 }) {
   return (
     <section className="section container faq-section">
       <div>
         <span className="eyebrow">A FEW THINGS TO KNOW</span>
         <h2>
-          Good questions.
-          <br />
-          Simple answers.
+          {title || (
+            <>
+              Good questions.
+              <br />
+              Simple answers.
+            </>
+          )}
         </h2>
         <p>
           Still curious?{" "}

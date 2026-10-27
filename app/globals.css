@@ -1193,6 +1193,34 @@ progress::-moz-progress-bar {
   font-size: 13px;
   color: #697563;
 }
+.guide-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 38px 52px;
+}
+.guide-grid h3 {
+  font-size: 22px;
+  line-height: 1.3;
+  margin-bottom: 15px;
+}
+.guide-grid p {
+  color: #697563;
+  line-height: 1.8;
+  margin-block: 12px;
+}
+.guide-grid a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.language-editorial {
+  padding-block: 10px 35px;
+}
+@media (max-width: 700px) {
+  .guide-grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}
 .page-heading {
   padding-block: 66px 52px;
   text-align: center;

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ArrowDown, AudioLines, Globe2, UsersRound } from "lucide-react";
 import { DubbingTool } from "@/components/dubbing-tool";
+import { DubbingGuide } from "@/components/dubbing-guide";
 import {
   ClosingCta,
   Faq,
@@ -18,7 +19,7 @@ export default function Home() {
     <>
       <JsonLd
         name="DubbingNow"
-        description="AI dubbing for complete videos and audio recordings, using preset synthetic voices."
+        description="AI dubbing for clear, single-speaker videos and audio recordings, with preset or cloned voices."
       />
       <section className="hero container">
         <div className="hero-eyebrow">
@@ -29,7 +30,7 @@ export default function Home() {
           AI Dubbing <em>Online.</em>
         </h1>
         <p className="hero-description">
-          Dub any video into another language — in one upload.
+          AI dubbing for clear, single-speaker recordings.
           <br className="desktop-break" /> Your voice. Your whole story. A whole
           new audience.
         </p>
@@ -56,6 +57,7 @@ export default function Home() {
       <SampleSection />
       <WhySection />
       <LanguageSection />
+      <DubbingGuide />
       <ToolLinks />
       <Faq />
       <ClosingCta />

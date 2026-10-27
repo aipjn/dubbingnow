@@ -15,25 +15,28 @@ export default function About() {
         One simple workflow.
       </h1>
       <p className="article-lead">
-        DubbingNow is being built to help creators adapt complete recordings
+        DubbingNow helps creators translate clear, single-speaker recordings
         into other languages.
       </p>
       <h2>Start with your story</h2>
       <p>
         Our goal is to make the first step simple: upload a video or audio
-        recording, choose a language, and keep every speaker in one workflow.
+        recording with one narrator, choose a language, and review the
+        translated audio in one workflow.
       </p>
       <h2>Choose the voices for your story</h2>
       <p>
         Choose preset voices or try cloning preview using reference speech from
-        your recording. During testing, we reuse one saved voice with
-        single-speaker recordings. Cloning quality is still being evaluated.
+        your recording. The default cloning workflow uses the narrator from each
+        upload. Quality varies with the source and target language, so listen to
+        the result before sharing it.
       </p>
       <h2>Where we are today</h2>
       <p>
-        This site is a working frontend preview. The demonstration uses sample
-        recordings. Live dubbing and payments become available when the backend
-        service is connected and verified.
+        This release is for one clear speaker per recording. Multi-speaker
+        conversations, lip-sync editing, and translated on-screen text are not
+        supported. The tool displays current duration limits and credit costs
+        before processing. Paid purchases are not currently available.
       </p>
     </article>
   );

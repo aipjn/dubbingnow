@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 export const alt =
-  "DubbingNow — AI dubbing online. One video, every speaker, a new audience.";
+  "DubbingNow — AI dubbing online for clear, single-speaker recordings.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export default function OpenGraphImage() {
@@ -24,7 +24,7 @@ export default function OpenGraphImage() {
         AI Dubbing Online.
       </div>
       <div style={{ fontSize: 29, color: "#748167", marginTop: 25 }}>
-        One upload. Every voice. A whole new audience.
+        One clear voice. A whole new audience.
       </div>
       <div
         style={{

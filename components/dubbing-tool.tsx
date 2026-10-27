@@ -42,9 +42,9 @@ import { BrowserDubbingTimings } from "@/lib/dubbing-timings";
 
 const labels: Record<string, string> = {
   queued: "Waiting to start",
-  transcribing: "Listening to every speaker",
+  transcribing: "Transcribing your recording",
   translating: "Translating your story",
-  synthesizing: "Creating the new voices",
+  synthesizing: "Generating translated speech",
   aligning: "Getting the timing just right",
   rendering: "Putting it all together",
   completed: "Your recording is ready",
@@ -954,7 +954,9 @@ function DubbingToolContent({
                   <span className="dropzone-meta">
                     {file
                       ? `${(file.size / 1_000_000).toFixed(1)} MB · Ready to ${demo ? "preview" : "dub"}`
-                      : `${format} · Up to ${Math.round((quota?.maxFileBytes || 500_000_000) / 1_000_000)} MB`}
+                      : quota || capabilities
+                        ? `${format} · Up to ${Math.round(Math.min(quota?.maxFileBytes || Infinity, capabilities?.maxFileBytes || Infinity) / 1_000_000)} MB`
+                        : format}
                   </span>
                   <button
                     className="choose-button"
@@ -1298,7 +1300,6 @@ function DubbingToolContent({
                 {quota?.kind === "user"
                   ? "Your credits, your stories"
                   : "No sign-up required"}
-                <span className="bottom-dot">·</span>Every speaker
               </span>
               <button
                 onClick={() => void useSample()}
