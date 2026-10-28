@@ -55,6 +55,6 @@ D1 不支持跨 HTTP 请求的交互式事务。本实现先读取业务条件�
 
 `npm run test:cloudflare-live -- --providers` 额外使用真实 Google 识别翻译和 Fish inline 克隆，需要本机已准备的 `.runtime/fish/test-reference.wav`。2026-10-24 通过：17.086542 秒输入和输出一致，后台处理 24.283 秒；音色数量始终为 1，没有创建、删除或替换模型。总验收脚本 59.575 秒含数据库准备、竞争测试、清空临时目录、重新下载和音色库存核对，不能当作网页操作耗时。身份为预置测试账号，真实 Auth0 登录不在此验收范围。
 
-本次改动解决持久数据共享。独立 worker 仍需要能运行 Node/FFmpeg 的后台执行环境；仅将 Next 应用部署为普通 Vercel Functions 不会自动启动 worker。Vercel 后台执行方式和公网部署仍需单独完成，不能把编译成功视为上线完成。
+后续发布更新：生产已接入 Vercel Queues 私有消费者，替代独立常驻 worker，并完成公网部署和域名绑定；仅普通 Next Functions 仍不会自动启动 `server/worker.ts`。真实正式站队列业务闭环仍待完整验收。当前状态与排查方法见 [项目交接手册](PROJECT_HANDOVER.md) 及 [Vercel 部署说明](VERCEL_DEPLOYMENT.md)。
 
 官方依据：[D1 REST query/batch](https://developers.cloudflare.com/api/resources/d1/subresources/database/methods/query/)、[D1 batch 事务](https://developers.cloudflare.com/d1/worker-api/d1-database/#batch)、[R2 签名 URL](https://developers.cloudflare.com/r2/api/s3/presigned-urls/)、[R2 条件写入](https://developers.cloudflare.com/r2/api/s3/api/)、[R2 CORS](https://developers.cloudflare.com/r2/buckets/cors/)。

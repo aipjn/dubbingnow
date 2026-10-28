@@ -1,8 +1,8 @@
 # DubbingNow
 
-按 `fangan1.0.txt` 的 SEO 页面方案搭建的 Next.js App Router / TypeScript / Tailwind 网站，现包含 Node API、Cloudflare D1 用户与积分数据库、私有 R2 音频存储和独立配音 worker；SQLite 仅作为本地开发模式。Google Gemini 负责识别、翻译和预设音色；声音克隆默认使用 Fish Audio，视频提取与合并留在浏览器内部执行。
+按 `fangan1.0.txt` 的 SEO 页面方案搭建的 Next.js App Router / TypeScript / Tailwind 网站，现包含 Node API、Cloudflare D1 用户与积分数据库、私有 R2 音频存储和 Vercel Queues 配音消费者；独立 worker 和 SQLite 保留供本地开发使用。Google Gemini 负责识别、翻译和预设音色；声音克隆默认使用 Fish Audio inline 参考音，视频提取与合并留在浏览器内部执行。
 
-目标域名为 `dubbingnow.com`，计划使用 Vercel。持久数据已可放在 Cloudflare，独立 worker 的后台执行环境仍需配置；部署边界与改造路径见 [Vercel 部署说明](docs/VERCEL_DEPLOYMENT.md)。
+正式站 [dubbingnow.com](https://dubbingnow.com/) 已部署到 Vercel，域名和 HTTPS 已通过检查。完整正式站业务链路仍待验收。平台分工、代码结构、密钥位置和复用、发布调试方法见 [项目交接手册](docs/PROJECT_HANDOVER.md)，具体执行方式见 [Vercel 部署说明](docs/VERCEL_DEPLOYMENT.md)。
 
 ## 本地运行
 
@@ -53,7 +53,7 @@ NEXT_PUBLIC_SITE_URL=https://dubbingnow.com
 - 语言总览、12 个目标语言落地页、定价、教程、博客与基础信息页。
 - 首屏上传、拖拽/选文件/试用样例、格式和大小检查、语言选择、实时额度。
 - 独立 media worker 本地提取视频音轨（AAC 直接复制或保留源采样率/声道的 WAV），只直传音频，本地合并 MP4。视频包直接复制，保留旋转方向，不重新编码画面。
-- 后台直接调用 Google 完成清晰人声的识别、翻译和新配音（含声音克隆 preview），按原时间线输出 24 kHz 单声道 WAV。当前不做音频分离或背景保留，新配音替换原音轨。
+- 后台调用 Google 完成清晰人声的识别、翻译与预设配音；克隆使用 Fish 当前任务参考音，按原时间线输出 24 kHz 单声道 WAV。当前限单人，不做音频分离或背景保留，新配音替换原音轨。
 - worker 分块 SHA-256、签名直传、上传进度、任务创建/阶段轮询/取消。
 - 当前页音视频预览和下载；网络中断后恢复，真实任务刷新后恢复，幂等创建避免重复扣额。
 - 积分规则和管理接口已实现。支付客户端契约保留，价格和支付供应商未确定，后台充值接口明确不可用，不会收款或模拟到账。
@@ -102,11 +102,9 @@ NEXT_PUBLIC_AUTH0_AUDIENCE=https://api.dubbingnow.test npm run build
 
 ## 声音克隆与耗时基准
 
-默认 `CLONE_PROVIDER=fish`：用户只上传原视频/音频和选择语言，后台挑参考句创建 Fish 音色。当前测试仅使用一个复刻席位：本地模式的音色 ID 保存在 `.data/fish-test-voice.json`，Cloudflare 模式保存到 D1，之后跨任务、跨进程重启都复用它。不会因取消、失败、换素材或重试而删除、替换或创建第二个音色。测试模式限定单人视频，换素材也仍用首次保存的声音。
+默认 `CLONE_PROVIDER=fish`、`FISH_VOICE_MODE=inline`、`FISH_ALLOW_VOICE_CREATION=false`：用户选择视频/音频和目标语言，后台从本次上传音频挑选干净、自然的 10–30 秒连续参考句，随 Fish 合成请求发送，不创建保存音色，不占新的保存席位。原视频不上传，参考句不合格时失败退款。
 
-`FISH_API_KEY` 只放在 `.env.local`。`FISH_REFERENCE_ID` 可指定已有音色；否则先查自己已有的音色，有且仅有一个时自动复用。账号没有音色时，首次合适素材才创建一次。创建前先落盘记录意图；请求中断时先查询远端恢复 ID，不自动重复创建。
-
-`npm run fish:voice` 只检查账号和保存的声音，不占席位。`npm run fish:voice -- --reference /path/reference.wav --seconds 20` 可以从选定的 10–30 秒音频注册唯一测试声音。也可以直接在网页提交首个单人视频，让后台自动选参考。Google 克隆仍可通过 `CLONE_PROVIDER=google` 启用，此时才显示额外录音表单。
+`FISH_API_KEY` 只保存在服务端私有配置。`FISH_REFERENCE_ID` 仅用于显式历史 `saved_test` 模式，未进入当前生产环境；该模式不能作为用户自己的声音克隆提供。`npm run fish:voice` 可只读检查账号；不要为普通联调运行创建、删除或替换保存模型。历史测试材料见 [Fish 测试说明](docs/FISH_TESTING.md)，当前生产行为以 [项目交接手册](docs/PROJECT_HANDOVER.md) 为准。
 
 `TEXT_PIPELINE=combined` 默认合并识别与翻译请求，`SYNTHESIS_CONCURRENCY=3` 默认三路合成；对照组可设为 `separate` / `1`。`npm run benchmark:local` 运行固定分句、真实 FFmpeg、模拟供应商延迟的受控比较。
 
@@ -114,15 +112,13 @@ NEXT_PUBLIC_AUTH0_AUDIENCE=https://api.dubbingnow.test npm run build
 
 `npm run test:full-chain` 提供真实配音联调：自动启动生产 Next 与 worker，在隔离数据库中准备已验证游客会话，从网页上传视频、调用真实 Google/Fish、下载并播放合并结果，再检查刷新恢复、手机布局、单次试用结算和音色席位数。没有 HTTP 拦截，不覆盖真实 Auth0/Turnstile 或支付。需先生产构建、保持 3000 端口空闲，并具备已保存 Fish 音色及本次参考 `.runtime/fish/test-reference.wav`。输出和计时见 `.runtime/full-chain/run-*/`。
 
-`STREAM_TEXT_PIPELINE=true` 可让已保存 Fish 音色的 clone 任务按完整译文分句提前合成；默认关闭，用于实测对照。并发上限仍为 `SYNTHESIS_CONCURRENCY`，最终 JSON、说话人与时间线验证通过后才发布结果；断流或取消会中止并等待在途任务，不重复合成已收到的句子。首次创建音色、Google 克隆与预设声音仍走完整分析流程。
+`STREAM_TEXT_PIPELINE=true` 可让历史保存 Fish 测试音色的 clone 任务按完整译文分句提前合成；代码默认关闭，生产虽配置为 true，但 inline 路径不会进入该分支，仍先做完整分析和参考验证。并发上限为 `SYNTHESIS_CONCURRENCY`，最终校验通过后才发布结果；断流或取消会中止并等待在途任务。
 
 `npm run test:compare-streaming` 自动按普通/流式/流式/普通跑四轮真实网页全链路，固定输入 SHA-256、模型、提示词和三路并发，逐轮保存点击到可下载时间、阶段计时、分句数和合成字数。识别翻译会有生成差异，报告保留这些差异，不能把小样本波动当作稳定性能保证。报告位于 `.runtime/full-chain/comparison-*/report.json`。
 
 ## 后续联调
 
-配置 Google key、Auth0 租户和 Turnstile 后，还需完成实际供应商与真人验证联调；仅填入 key 不代表账号额度、权限或配音质量已验证。Google API 返回 402 时检查 AI Studio 项目的预付费余额。下一阶段再确定积分单价、接入真实支付及 webhook。后端新增 Cloudflare D1 + 私有 R2 存储适配，API 与 worker 可共享云端状态；详见 [Cloudflare 接入说明](docs/CLOUDFLARE_STORAGE.md)。独立 worker 的公网运行环境及外部告警通知接收端尚未接入。
-
-发布真实服务前，还需确认供应商语言能力、价格、会话恢复、支持联系方式及最终隐私/服务条款。当前这些页面如实显示 preview 状态，没有伪造处理数量、客户评价或支持邮箱。
+真实 Google / Fish、D1/R2 和本地 Auth0 配音已有验收记录；正式域名上的真实注册、游客验证、队列、关页继续执行、积分与下载仍需完整验收。Auth0 的正式邮件发送服务、Google OAuth 自有凭据、真实支付及外部告警仍待接入。支持联系方式和服务条款已配置；具体证据与边界见 [项目交接手册](docs/PROJECT_HANDOVER.md)。
 
 ## 示例素材
 
