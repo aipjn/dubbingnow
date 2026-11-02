@@ -87,6 +87,45 @@ export function VoiceDubbingGuide() {
           </section>
         </div>
       </section>
+      <section>
+        <h2>How to review a voice dub before publishing</h2>
+        <p>
+          Start with a short passage that includes a product name, a number, and
+          a complete instruction. Keep the original script or a simple list of
+          important terms beside you as you listen. Compare what the translated
+          speaker actually says with the source, rather than judging only
+          whether the voice sounds fluent. Ask a listener who understands the
+          target language to flag missing qualifications, changed measurements,
+          or phrases that could reverse an instruction.
+        </p>
+        <p>
+          Check timing against the action on screen. A sentence explaining a
+          button should finish while that button is still visible, and a warning
+          should be heard before the step it concerns. Listen at the normal
+          playback speed for rushed endings, long gaps, and words cut off by a
+          scene change. If the source leaves no breathing room, revise that
+          recording with clearer pauses before trying another dub.
+        </p>
+        <p>
+          Judge voice quality separately from translation accuracy. Compare a
+          preset voice with a cloned result using the same passage, then choose
+          the version your audience can follow comfortably. With cloning, check
+          whether the reference contains clean speech from the intended
+          narrator. Music, echo, or another person speaking over that passage
+          can make it a poor reference. Have your reviewer assess pronunciation
+          and regional vocabulary as well as the resemblance to the original
+          speaker.
+        </p>
+        <p>
+          For a course or product series, keep a review checklist for names,
+          units, tone, and recurring instructions across every recording. Give
+          each downloaded file a clear language and lesson label so an approved
+          version is easy to identify. Play the final exported file all the way
+          through before publishing, and review any captions, slides, prices,
+          and interface labels separately. The new voice track does not update
+          those visual details for you.
+        </p>
+      </section>
     </section>
   );
 }
