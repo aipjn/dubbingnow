@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { DubbingTool } from "@/components/dubbing-tool";
+import { VoiceDubbingGuide } from "@/components/voice-dubbing-guide";
 import { Breadcrumbs } from "@/components/shell";
 import {
   Faq,
@@ -57,6 +58,7 @@ export default async function ToolPage({
         <p>{tool.intro}</p>
       </div>
       <HowItWorks />
+      {tool.slug === "voice-dubbing" && <VoiceDubbingGuide />}
       <WhySection />
       <Faq items={[...tool.faqs, ...commonFaqs.slice(2, 5)]} />
       <ToolLinks exclude={tool.slug} limit={3} />
