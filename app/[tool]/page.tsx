@@ -60,7 +60,13 @@ export default async function ToolPage({
       <HowItWorks />
       {tool.slug === "voice-dubbing" && <VoiceDubbingGuide />}
       <WhySection />
-      <Faq items={[...tool.faqs, ...commonFaqs.slice(2, 5)]} />
+      <Faq
+        items={
+          tool.slug === "voice-dubbing"
+            ? [...tool.faqs, commonFaqs[3], commonFaqs[5]]
+            : [...tool.faqs, ...commonFaqs.slice(2, 5)]
+        }
+      />
       <ToolLinks exclude={tool.slug} limit={3} />
     </>
   );

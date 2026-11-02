@@ -200,13 +200,13 @@ export function LanguageSection() {
           </p>
         </div>
         <div className="language-chips">
-          {languages.slice(0, 8).map((lang) => (
+          {languages.map((lang) => (
             <Link
               key={lang.code}
               href={`/languages/${lang.slug}/dub-video-to-${lang.slug}`}
             >
-              <span>{lang.flag}</span>
-              {lang.name}
+              <span aria-hidden="true">{lang.flag}</span>
+              {lang.name} dubbing
               <ArrowUpRight size={13} />
             </Link>
           ))}

@@ -29,7 +29,7 @@ export default function LanguagesPage() {
             href={`/languages/${lang.slug}/dub-video-to-${lang.slug}`}
           >
             <span className="language-flag">{lang.flag}</span>
-            <h2>{lang.name}</h2>
+            <h2>{lang.name} dubbing</h2>
             <span>{lang.native}</span>
             <span className="language-grid-cta">
               Dub into {lang.name}

@@ -136,8 +136,12 @@ export const tools = [
         "Choose voice cloning to use clear reference speech from the speaker in your uploaded recording. Include a clean 10–30 second passage. Quality varies with the recording and the target language; review the result before sharing it.",
       ],
       [
-        "What about overlapping speech?",
-        "Overlapping speech is not supported. Use one narrator per recording, without other voices or music competing with the narration.",
+        "How long does it take to dub a 40-minute course?",
+        "There is no fixed turnaround time for a 40-minute course. Check the duration and file-size limits shown in the upload tool first; if a lesson exceeds your allowance, divide it into shorter single-speaker recordings at natural topic breaks. Processing time depends on the recording, target language, voice mode, and queue. Test a short representative lesson before planning the rest, and allow time to review the translated meaning and timing. Each clip and target language is a separate job; the tool does not batch an entire course automatically.",
+      ],
+      [
+        "Can I combine the dubbed audio with my original video?",
+        "Yes. Start with an MP4 or MOV video: the browser keeps the original picture on your device, sends the extracted audio for dubbing, then combines the translated track with the video for preview and download. Keep the original file available; after returning to a project, you may need to select it again to assemble the download. Audio-only uploads produce an audio file that you can add to a video in your editor. The generated track replaces the original soundtrack, including its music and sound effects.",
       ],
     ],
   },
