@@ -1,6 +1,53 @@
 import Link from "next/link";
 import { CurrentLimits } from "./current-limits";
 
+const languageNotes = [
+  [
+    "Spanish",
+    "For tutorials and courses, choose Spain or Latin America as your audience; review regional vocabulary, pronunciation, and formality.",
+  ],
+  [
+    "Portuguese",
+    "For Brazilian audiences, try conversational product or lesson narration; have a local listener check expressions and the generated accent.",
+  ],
+  [
+    "Hindi",
+    "For lessons and walkthroughs, keep sentences short and leave pauses; review pacing, names, and English terms within Hindi narration.",
+  ],
+  [
+    "Japanese / Korean",
+    "Match honorifics and politeness to the audience; a fluent human must review register before publishing lessons or customer guidance.",
+  ],
+  [
+    "German",
+    "For technical explanations and teaching, review terminology and longer sentences; keep instructions easy to follow at the generated pace.",
+  ],
+  [
+    "French",
+    "For formal narration, review liaison, names, and spoken numbers; check that dates and measurements remain clear when heard aloud.",
+  ],
+  [
+    "Italian",
+    "For food and lifestyle clips, try warm narration; review regional food names, expressive phrasing, and delivery with a fluent listener.",
+  ],
+  [
+    "Arabic",
+    "Distinguish Modern Standard Arabic from local dialects. The tool does not guarantee a dialect; human review of the result is essential.",
+  ],
+  [
+    "Dutch",
+    "Consider Dutch alongside a German version for product guides; review Dutch pronunciation and terminology independently rather than reusing German wording.",
+  ],
+  [
+    "Chinese",
+    "For Mandarin narration, check pronunciation; confirm Simplified or Traditional Chinese for accompanying scripts and on-screen text, which dubbing leaves unchanged.",
+  ],
+  [
+    "English",
+    "Translate recordings into clear English narration for international lessons or product guides; review regional vocabulary, pronunciation, and natural phrasing.",
+  ],
+] as const;
+
 export function DubbingGuide() {
   return (
     <section
@@ -18,7 +65,7 @@ export function DubbingGuide() {
         </p>
       </div>
       <div className="guide-grid">
-        <section>
+        <section className="guide-overview">
           <h3>What AI dubbing changes</h3>
           <p>
             AI dubbing turns spoken narration into another language. DubbingNow
@@ -36,8 +83,8 @@ export function DubbingGuide() {
             the picture.
           </p>
         </section>
-        <section>
-          <h3>Which languages can I use?</h3>
+        <section className="guide-language-section">
+          <h3 id="dubbing-language-options">Which languages can I use?</h3>
           <p>
             The service supports English, Spanish, French, German, Portuguese,
             Italian, Japanese, Korean, Chinese, Hindi, Arabic, and Dutch as
@@ -64,6 +111,27 @@ export function DubbingGuide() {
             accent; listen to a short result before committing to a longer
             recording.
           </p>
+          <table
+            className="language-guidance-table"
+            aria-labelledby="dubbing-language-options"
+          >
+            <thead>
+              <tr>
+                <th scope="col">Language</th>
+                <th scope="col">Audience and review notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {languageNotes.map(([language, note]) => (
+                <tr key={language}>
+                  <th scope="row">{language}</th>
+                  <td>
+                    {language === "Arabic" ? <strong>{note}</strong> : note}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </section>
         <section>
           <h3>What files and recording lengths work?</h3>

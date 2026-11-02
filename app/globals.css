@@ -1212,6 +1212,37 @@ progress::-moz-progress-bar {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+.guide-overview,
+.guide-language-section {
+  grid-column: 1 / -1;
+}
+.guide-overview,
+.guide-language-section > p {
+  max-width: 740px;
+}
+.language-guidance-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+.language-guidance-table th,
+.language-guidance-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+.language-guidance-table thead {
+  background: var(--sage);
+}
+.language-guidance-table th:first-child {
+  width: 24%;
+}
+.language-guidance-table td {
+  color: #53634b;
+}
 .language-editorial {
   padding-block: 10px 35px;
 }
@@ -1219,6 +1250,14 @@ progress::-moz-progress-bar {
   .guide-grid {
     grid-template-columns: 1fr;
     gap: 28px;
+  }
+  .language-guidance-table th,
+  .language-guidance-table td {
+    padding: 12px 8px;
+  }
+  .language-guidance-table th:first-child {
+    width: 30%;
+    overflow-wrap: anywhere;
   }
 }
 .page-heading {
