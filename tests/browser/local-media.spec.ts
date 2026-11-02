@@ -63,7 +63,9 @@ test("video dubbing runs automatically and exposes only the finished result", as
       name: /Extract audio|Merge video|Load local samples/i,
     }),
   ).toHaveCount(0);
-  await page.getByRole("button", { name: "Try a sample", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Load video example", exact: true })
+    .click();
   await page.getByRole("button", { name: "Dub Video Free" }).click();
   await downloadVideo(page, testInfo.outputPath("dubbed.mp4"));
   const result = testInfo.outputPath("dubbed.mp4");

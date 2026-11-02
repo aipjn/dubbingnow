@@ -76,32 +76,43 @@ export function SampleSection() {
         <div className="sample-copy">
           <span className="eyebrow">SAME STORY. NEW LANGUAGE.</span>
           <h2>
-            Hear the difference.
+            See it. Hear it.
             <br />
             <em>Feel the connection.</em>
           </h2>
           <p>
             A short English story, reimagined in Spanish. Listen to the original
-            and the translated sample.
+            and the translated version as video or audio.
           </p>
           <span className="sample-note">
-            Illustrative sample · preset synthetic voices
+            Illustrative title-card video and audio · preset synthetic voices
           </span>
         </div>
         <div className="sample-card">
-          <div className="sample-visual">
-            <div className="orbit orbit-one" />
-            <div className="orbit orbit-two" />
-            <span className="sample-visual-label">STORIES WITHOUT BORDERS</span>
-            <div className="sample-globe">
-              <Globe2 size={85} strokeWidth={0.8} />
+          <h3 className="sample-media-heading">Watch the video demo</h3>
+          <div className="sample-videos">
+            <div>
+              <p>Original · English</p>
+              <video
+                controls
+                playsInline
+                preload="metadata"
+                src="/demo/english.mp4"
+                aria-label="English original video sample"
+              />
             </div>
-            <div className="speech-tag speech-en">Hello, world.</div>
-            <div className="speech-tag speech-es">Hola, mundo.</div>
-            <span className="sample-visual-bottom">
-              <AudioLines size={15} />A story worth sharing
-            </span>
+            <div>
+              <p>Dubbed · Spanish</p>
+              <video
+                controls
+                playsInline
+                preload="metadata"
+                src="/demo/spanish.mp4"
+                aria-label="Spanish dubbed video sample"
+              />
+            </div>
           </div>
+          <h3 className="sample-media-heading">Listen to the audio demo</h3>
           <div className="sample-players">
             <div>
               <span>

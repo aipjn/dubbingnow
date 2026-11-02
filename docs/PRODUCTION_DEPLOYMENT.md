@@ -1,5 +1,7 @@
 # 单机生产部署与验收
 
+> 这是备用单机部署方案。当前线上使用 [Vercel 部署](VERCEL_DEPLOYMENT.md)，当前验收缺口见 [项目现状](CURRENT_STATUS.md)。
+
 适用当前 Google + Fish 方案：一台 Linux 主机，Node 22.16+、FFmpeg/ffprobe、nginx、systemd。API 与独立 worker 使用同一个本地持久目录。模板未安装到任何服务器，也未购买服务或修改现有测试音色。
 
 ## 先准备的外部信息

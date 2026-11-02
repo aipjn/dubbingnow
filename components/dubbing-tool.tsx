@@ -107,6 +107,20 @@ function DubbingToolContent({
     return () => clearInterval(timer);
   }, []);
   const [file, setFile] = useState<File | null>(null);
+  const [loadingSample, setLoadingSample] = useState<"audio" | "video" | null>(
+    null,
+  );
+  const [sampleKind, setSampleKind] = useState<"audio" | "video" | null>(null);
+  const [samplePreview, setSamplePreview] = useState("");
+  useEffect(() => {
+    if (!file || !sampleKind) {
+      setSamplePreview("");
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setSamplePreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file, sampleKind]);
   const [source, setSource] = useState("auto");
   const [target, setTarget] = useState(defaultTarget);
   const [voiceMode, setVoiceMode] = useState<VoiceMode>("preset");
@@ -401,6 +415,7 @@ function DubbingToolContent({
               capabilities?.maxFileBytes || 500_000_000,
             ),
       );
+      setSampleKind(null);
       setFile(next);
       originalVideoRef.current = contentType.startsWith("video/") ? next : null;
       updateVideoContext(null);
@@ -413,9 +428,12 @@ function DubbingToolContent({
       setError(errorMessage(err));
     }
   }
-  async function useSample() {
+  async function useSample(media: "audio" | "video") {
+    if (initializing || loadingSample || busy || pending || recoverable) return;
+    setLoadingSample(media);
+    setError("");
     try {
-      const video = kind === "video";
+      const video = media === "video";
       const response = await fetch(
         video ? "/demo/english.mp4" : "/demo/english.wav",
       );
@@ -430,8 +448,12 @@ function DubbingToolContent({
           { type: video ? "video/mp4" : "audio/wav" },
         ),
       );
+      setSource("en");
+      setSampleKind(media);
     } catch (err) {
       setError(errorMessage(err));
+    } finally {
+      setLoadingSample(null);
     }
   }
   async function submit(resume = false) {
@@ -917,10 +939,10 @@ function DubbingToolContent({
                   className="sr-only"
                   type="file"
                   accept={accept}
-                  disabled={busy || !!pending || recoverable}
+                  disabled={busy || !!loadingSample || !!pending || recoverable}
                   onChange={(event) => {
                     const next = event.target.files?.[0];
-                    if (next) chooseFile(next);
+                    if (next && !loadingSample) chooseFile(next);
                     event.target.value = "";
                   }}
                 />
@@ -928,14 +950,14 @@ function DubbingToolContent({
                   className={`dropzone ${dragging ? "dragging" : ""} ${file ? "has-file" : ""}`}
                   onDragOver={(event) => {
                     event.preventDefault();
-                    if (!busy) setDragging(true);
+                    if (!busy && !loadingSample) setDragging(true);
                   }}
                   onDragLeave={() => setDragging(false)}
                   onDrop={(event) => {
                     event.preventDefault();
                     setDragging(false);
                     const next = event.dataTransfer.files[0];
-                    if (next) chooseFile(next);
+                    if (next && !loadingSample) chooseFile(next);
                   }}
                 >
                   <div className="upload-art">
@@ -960,7 +982,9 @@ function DubbingToolContent({
                   </span>
                   <button
                     className="choose-button"
-                    disabled={busy || !!pending || recoverable}
+                    disabled={
+                      busy || !!loadingSample || !!pending || recoverable
+                    }
                     onClick={() => inputRef.current?.click()}
                   >
                     {file ? "Choose another file" : "Choose a file"}
@@ -983,7 +1007,9 @@ function DubbingToolContent({
                   <select
                     id="source-language"
                     value={source}
-                    disabled={busy || !!pending || recoverable}
+                    disabled={
+                      busy || !!loadingSample || !!pending || recoverable
+                    }
                     onChange={(e) => setSource(e.target.value)}
                   >
                     <option value="auto">Auto-detect language</option>
@@ -1038,7 +1064,9 @@ function DubbingToolContent({
                       <select
                         id="voice-mode"
                         value={voiceMode}
-                        disabled={busy || !!pending || recoverable}
+                        disabled={
+                          busy || !!loadingSample || !!pending || recoverable
+                        }
                         onChange={(e) =>
                           setVoiceMode(e.target.value as VoiceMode)
                         }
@@ -1106,7 +1134,12 @@ function DubbingToolContent({
                             <input
                               type="file"
                               accept=".wav,.mp3"
-                              disabled={busy || !!pending || recoverable}
+                              disabled={
+                                busy ||
+                                !!loadingSample ||
+                                !!pending ||
+                                recoverable
+                              }
                               onChange={(e) => {
                                 const next = e.target.files?.[0] || null;
                                 setConsentFiles((files) =>
@@ -1136,7 +1169,12 @@ function DubbingToolContent({
                           {consentFiles.length > 1 && (
                             <button
                               type="button"
-                              disabled={busy || !!pending || recoverable}
+                              disabled={
+                                busy ||
+                                !!loadingSample ||
+                                !!pending ||
+                                recoverable
+                              }
                               onClick={() =>
                                 setConsentFiles((files) => files.slice(0, -1))
                               }
@@ -1158,6 +1196,7 @@ function DubbingToolContent({
                   className="dub-button"
                   disabled={
                     !file ||
+                    !!loadingSample ||
                     busy ||
                     initializing ||
                     !quota ||
@@ -1193,7 +1232,10 @@ function DubbingToolContent({
                   ) : (
                     <>
                       <Sparkles size={17} />
-                      Dub {kind === "audio" ? "Audio" : "Video"}
+                      Dub{" "}
+                      {kind === "audio" || file?.type.startsWith("audio/")
+                        ? "Audio"
+                        : "Video"}
                       {quota?.kind === "guest" ? " Free" : ""}
                       <ArrowRight size={17} />
                     </>
@@ -1215,6 +1257,34 @@ function DubbingToolContent({
                 </span>
               </div>
             </div>
+            {sampleKind && samplePreview && !busy && (
+              <div className="loaded-sample">
+                <p role="status">
+                  {sampleKind === "video" ? "Video" : "Audio"} example loaded.
+                  Preview it below, choose a language, then click Dub{" "}
+                  {sampleKind === "video" ? "Video" : "Audio"}.
+                  {quota?.kind === "guest" && !trialVerified
+                    ? " Unlock your free trial to enable dubbing."
+                    : ""}
+                </p>
+                {sampleKind === "video" ? (
+                  <video
+                    controls
+                    playsInline
+                    preload="metadata"
+                    src={samplePreview}
+                    aria-label="Loaded video example preview"
+                  />
+                ) : (
+                  <audio
+                    controls
+                    preload="metadata"
+                    src={samplePreview}
+                    aria-label="Loaded audio example preview"
+                  />
+                )}
+              </div>
+            )}
             {busy && (
               <div className="processing" role="status" aria-live="polite">
                 <div>
@@ -1298,13 +1368,39 @@ function DubbingToolContent({
                   ? "Your credits, your stories"
                   : "No sign-up required"}
               </span>
-              <button
-                onClick={() => void useSample()}
-                disabled={busy || !!pending || recoverable}
+              <div
+                className="sample-actions"
+                aria-label="Load an example recording"
+                aria-busy={!!loadingSample}
               >
-                Try a sample
-                <ArrowRight size={13} />
-              </button>
+                {(["video", "audio"] as const)
+                  .filter((media) => kind === "all" || kind === media)
+                  .map((media) => (
+                    <button
+                      key={media}
+                      type="button"
+                      onClick={() => void useSample(media)}
+                      disabled={
+                        busy ||
+                        initializing ||
+                        !!pending ||
+                        recoverable ||
+                        !!loadingSample
+                      }
+                    >
+                      {loadingSample === media ? (
+                        <Loader2 size={16} className="spin" />
+                      ) : media === "video" ? (
+                        <Film size={16} />
+                      ) : (
+                        <FileAudio2 size={16} />
+                      )}
+                      {loadingSample === media
+                        ? "Loading…"
+                        : `Load ${media} example`}
+                    </button>
+                  ))}
+              </div>
             </div>
           </>
         )}

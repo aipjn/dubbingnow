@@ -1,8 +1,10 @@
 # DubbingNow
 
-按 `fangan1.0.txt` 的 SEO 页面方案搭建的 Next.js App Router / TypeScript / Tailwind 网站，现包含 Node API、Cloudflare D1 用户与积分数据库、私有 R2 音频存储和 Vercel Queues 配音消费者；独立 worker 和 SQLite 保留供本地开发使用。Google Gemini 负责识别、翻译和预设音色；声音克隆默认使用 Fish Audio inline 参考音，视频提取与合并留在浏览器内部执行。
+基于 Next.js App Router / TypeScript / Tailwind 的跨语言音视频配音网站，现包含 Node API、Cloudflare D1 用户与积分数据库、私有 R2 音频存储和 Vercel Queues 配音消费者；独立 worker 和 SQLite 保留供本地开发使用。Google Gemini 负责识别、翻译和预设音色；声音克隆默认使用 Fish Audio inline 参考音，视频提取与合并留在浏览器内部执行。
 
 正式站 [dubbingnow.com](https://dubbingnow.com/) 已部署到 Vercel，域名和 HTTPS 已通过检查。完整正式站业务链路仍待验收。平台分工、代码结构、密钥位置和复用、发布调试方法见 [项目交接手册](docs/PROJECT_HANDOVER.md)，具体执行方式见 [Vercel 部署说明](docs/VERCEL_DEPLOYMENT.md)。
+
+当前进展见 [项目现状](docs/CURRENT_STATUS.md)，完整资料见 [文档导航](docs/README.md)。历史调研和阶段验收已集中到 `docs/archive/`。
 
 ## 本地运行
 
@@ -18,7 +20,7 @@ npm run dev
 
 另开终端运行 `npm run worker`，打开 http://127.0.0.1:3000。`.env.example` 默认 `NEXT_PUBLIC_API_BASE_URL=/`，使用本站真实后台。示例文件中的 Google key、Auth0 和 Turnstile 配置默认留空：页面可以访问，真实登录/真人验证/配音按缺失项报错，配音 key 缺失时不会创建任务或扣积分。
 
-配置和部署说明：[docs/BACKEND.md](./docs/BACKEND.md)。填写 `GEMINI_API_KEY` 后重启 API 与 worker；公共 Auth0 / Turnstile 变量改变后还需重新构建前端。
+配置和部署说明：[docs/BACKEND.md](docs/BACKEND.md)。填写 `GEMINI_API_KEY` 后重启 API 与 worker；公共 Auth0 / Turnstile 变量改变后还需重新构建前端。
 
 需要旧的浏览器演示时，显式设置 `NEXT_PUBLIC_API_BASE_URL=` 并重新启动/构建：不上传用户文件、不进行翻译、不收款；完成后展示固定西班牙语样例，页面明确标注 demo。
 
@@ -33,15 +35,15 @@ NEXT_PUBLIC_SITE_URL=https://dubbingnow.com
 
 本站同源时用 `/` 即可。独立域名时同时设置服务端 `BACKEND_PUBLIC_URL` 和 `API_ALLOWED_ORIGINS`，然后重启开发服务；生产环境需重新 build（NEXT_PUBLIC 变量在构建时注入）。API base URL 不包含 `/v1`。API 不可用时显示真实错误，不会静默切回演示。
 
-- 接口解释和后端验收：[docs/API.md](./docs/API.md)
-- OpenAPI 3.1：[docs/openapi.yaml](./docs/openapi.yaml)
+- 接口解释和后端验收：[docs/API.md](docs/API.md)
+- OpenAPI 3.1：[docs/openapi.yaml](docs/openapi.yaml)
 - 前端 wire types：`lib/api/types.ts`
 - HTTP 实现：`lib/api/http.ts`
 - 演示实现：`lib/api/demo.ts`
 
 ## 登录与积分
 
-登录采用 Auth0 Universal Login（官方 SPA SDK / PKCE），本站不收密码。按 `.env.example` 配置 domain、client ID 和自定义 API audience，回调为 `/auth/callback`。Auth0 tenant 配置和后端验证规则见 [docs/API.md](./docs/API.md)。
+登录采用 Auth0 Universal Login（官方 SPA SDK / PKCE），本站不收密码。按 `.env.example` 配置 domain、client ID 和自定义 API audience，回调为 `/auth/callback`。Auth0 tenant 配置和后端验证规则见 [docs/API.md](docs/API.md)。
 
 游客默认一次 30 秒试用，使用 Turnstile 真人验证；真实账户必须验证邮箱后使用；新账户赠额受策略与服务端上限共同约束（默认上限 50 积分），同邮箱的不同身份不重复赠送。演示模式仍为 500 积分。赠送额度、试用限制、每分钟费率、最低扣费和计费粒度可在 `/admin` 配置。当前 10/20 积分每分钟是可修改的初始规则，正式费率以后确定。任务先报价再预留积分，成功结算，失败或取消退回预留；`/account` 显示余额、流水和任务历史。首次管理员通过服务端白名单或 `npm run admin:grant -- "auth0|subject"` 授予，普通用户不能自选角色。
 
@@ -104,11 +106,11 @@ NEXT_PUBLIC_AUTH0_AUDIENCE=https://api.dubbingnow.test npm run build
 
 默认 `CLONE_PROVIDER=fish`、`FISH_VOICE_MODE=inline`、`FISH_ALLOW_VOICE_CREATION=false`：用户选择视频/音频和目标语言，后台从本次上传音频挑选干净、自然的 10–30 秒连续参考句，随 Fish 合成请求发送，不创建保存音色，不占新的保存席位。原视频不上传，参考句不合格时失败退款。
 
-`FISH_API_KEY` 只保存在服务端私有配置。`FISH_REFERENCE_ID` 仅用于显式历史 `saved_test` 模式，未进入当前生产环境；该模式不能作为用户自己的声音克隆提供。`npm run fish:voice` 可只读检查账号；不要为普通联调运行创建、删除或替换保存模型。历史测试材料见 [Fish 测试说明](docs/FISH_TESTING.md)，当前生产行为以 [项目交接手册](docs/PROJECT_HANDOVER.md) 为准。
+`FISH_API_KEY` 只保存在服务端私有配置。`FISH_REFERENCE_ID` 仅用于显式历史 `saved_test` 模式，未进入当前生产环境；该模式不能作为用户自己的声音克隆提供。`npm run fish:voice` 可只读检查账号；不要为普通联调运行创建、删除或替换保存模型。历史测试材料见 [Fish 测试说明](docs/archive/FISH_TESTING.md)，当前生产行为以 [项目交接手册](docs/PROJECT_HANDOVER.md) 为准。
 
 `TEXT_PIPELINE=combined` 默认合并识别与翻译请求，`SYNTHESIS_CONCURRENCY=3` 默认三路合成；对照组可设为 `separate` / `1`。`npm run benchmark:local` 运行固定分句、真实 FFmpeg、模拟供应商延迟的受控比较。
 
-[Fish 单席位测试说明](./docs/FISH_TESTING.md)；[参考筛选算法与前期 Google 基准](./docs/VOICE_CLONING.md)。Cloudflare 模式的音色记录和任务计时保存在 D1；本地模式任务计时在 `.data/metrics/<jobId>.json`；浏览器阶段计时在当前会话的 `dubbingnow.client-timing.v1.*` sessionStorage 中。
+[Fish 单席位测试说明](docs/archive/FISH_TESTING.md)；[参考筛选算法与前期 Google 基准](docs/archive/VOICE_CLONING.md)。Cloudflare 模式的音色记录和任务计时保存在 D1；本地模式任务计时在 `.data/metrics/<jobId>.json`；浏览器阶段计时在当前会话的 `dubbingnow.client-timing.v1.*` sessionStorage 中。
 
 `npm run test:full-chain` 提供真实配音联调：自动启动生产 Next 与 worker，在隔离数据库中准备已验证游客会话，从网页上传视频、调用真实 Google/Fish、下载并播放合并结果，再检查刷新恢复、手机布局、单次试用结算和音色席位数。没有 HTTP 拦截，不覆盖真实 Auth0/Turnstile 或支付。需先生产构建、保持 3000 端口空闲，并具备已保存 Fish 音色及本次参考 `.runtime/fish/test-reference.wav`。输出和计时见 `.runtime/full-chain/run-*/`。
 
@@ -132,7 +134,7 @@ NEXT_PUBLIC_AUTH0_AUDIENCE=https://api.dubbingnow.test npm run build
 
 ## 上线准备实现（2026-10-19）
 
-最新复核、修复和实际测试结果见 [2026-10-24 发布状态](docs/LAUNCH_STATUS_2026-10-24.md)。
+最新复核、修复和实际测试结果见 [2026-10-24 发布状态](docs/archive/LAUNCH_STATUS_2026-10-24.md)。
 
 生产部署流程与仍需外部资料的验收见 [PRODUCTION_DEPLOYMENT.md](docs/PRODUCTION_DEPLOYMENT.md)。现有 Google + Fish 与本地单席位音色保留。
 
@@ -144,4 +146,4 @@ NEXT_PUBLIC_AUTH0_AUDIENCE=https://api.dubbingnow.test npm run build
 - `npm run backup -- create <backup-root>` 在线备份；`npm run backup -- restore <snapshot> <new-directory>` 校验并恢复到新目录，不覆盖已有数据。
 - `deploy/` 提供 systemd API/worker/监控/每日备份与 nginx 模板；`.github/workflows/ci.yml` 提供自动验证。模板尚未安装到服务器。
 
-正式 Auth0 登录配置、域名/TLS、支持邮箱/主体名称及真实设备/自然人声验收仍需补齐。支付继续禁用。当前功能进展见 [FUNCTIONAL_STATUS.md](docs/FUNCTIONAL_STATUS.md)，不能把存储接入通过当成登录注册或整站上线完成。
+域名/TLS、支持邮箱和运营名称已有配置及验收记录；正式域名上的 Auth0/Turnstile 完整业务链路、真实设备及自然人声质量仍需验收。支付继续禁用。当前功能进展见 [FUNCTIONAL_STATUS.md](docs/FUNCTIONAL_STATUS.md)，不能把存储接入通过当成登录注册或整站上线完成。

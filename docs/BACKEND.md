@@ -1,5 +1,7 @@
 > 正式存储方案已更新为 Cloudflare D1 + 私有 R2，接入、凭据、初始化和云端验证见 [CLOUDFLARE_STORAGE.md](CLOUDFLARE_STORAGE.md)。下文的本地磁盘/SQLite 操作为 `PERSISTENCE_DRIVER=local` 开发模式。独立 worker 的处理链路保持不变。
 
+> 当前生产架构与配置以 [项目交接手册](PROJECT_HANDOVER.md) 为准：Vercel Queues + D1/R2，Fish 克隆默认使用本次任务的 inline 参考音。本文中的 SQLite / 独立 worker / 单席位音色章节适用于本地或显式测试模式。
+
 # 后台运行与配置
 
 当前实现是一个可持久运行的单机后台：Next.js Node 路由提供 `/v1` HTTP API，SQLite 保存用户、积分和任务，独立 worker 调用 Google / Fish 并处理音频。服务器只接收音频；原视频由浏览器保留，收到新音轨后自动合并。产品界面不展示提取、分段或合并等实现步骤。
@@ -63,7 +65,7 @@ Google 适配器使用当前 [Interactions REST API](https://ai.google.dev/gemin
 
 ## 登录、管理员与积分
 
-Auth0 Universal Login / PKCE 的租户配置见 [API.md](./API.md)。API 验证 RS256 JWKS、issuer、audience 和有效期，不接受 ID token、自选角色或浏览器传入的价格。`/userinfo` 获取账号联系资料，应用账户以 issuer + sub 唯一关联。已知身份的资料短暂缓存，但每个请求重新验证 JWT 和本地账户状态。
+Auth0 Universal Login / PKCE 的租户配置见 [API.md](API.md)。API 验证 RS256 JWKS、issuer、audience 和有效期，不接受 ID token、自选角色或浏览器传入的价格。`/userinfo` 获取账号联系资料，应用账户以 issuer + sub 唯一关联。已知身份的资料短暂缓存，但每个请求重新验证 JWT 和本地账户状态。
 
 用户首次登录原子创建账户与钱包，赠额受策略与 SIGNUP_CREDITS_CAP 共同控制，默认上限 50 积分；真实登录必须通过邮箱验证，同一邮箱不重复赠送。管理员可以在 `/admin` 搜索用户、暂停/恢复、调整积分以及修改赠送和计费规则。初始 10/20 积分每分钟是待定的可配置规则，注册赠送和费率改变不会覆盖已有钱包或旧报价。
 
@@ -79,7 +81,7 @@ CLI 只授予已有账户角色并记录审计。API 不提供公开授予管理
 
 ## 上传与任务
 
-完整接口字段、状态和错误见 [API.md](./API.md) 与 [openapi.yaml](./openapi.yaml)。
+完整接口字段、状态和错误见 [API.md](API.md) 与 [openapi.yaml](openapi.yaml)。
 
 1. 签名上传地址 15 分钟有效，流式 PUT 校验字节数与 SHA-256，完成时用 ffprobe 核对实际格式、音频轨道和时长。支持 AAC M4A、MP3、常见 PCM WAV，默认最多 100 MB（MAX_FILE_BYTES 可调整，硬上限 500 MB）。
 2. 报价保存 owner、完整输入、费用与策略版本，15 分钟有效。创建任务时一次事务锁钱包、预留积分、绑定报价与幂等记录；相同 key 不重复创建，同一报价不能换 key 重扣。
@@ -90,7 +92,7 @@ CLI 只授予已有账户角色并记录审计。API 不提供公开授予管理
 
 当前不提供人声/背景分离或原背景保留。测试和使用范围先限定为清晰人声；有音乐、环境声的输入也只返回新配音，原背景不会加回。Google key 缺失时创建任务在预留积分前返回 SERVICE_UNAVAILABLE。产品界面不展示工程处理步骤。
 
-声音克隆默认使用 Fish Audio 单席位测试模式：只上传原素材，首次创建一个音色后持久复用。取消、失败、重启都不自动删除或重新创建，见 [FISH_TESTING.md](./FISH_TESTING.md)。Google 克隆可显式配置启用，其额外录音规则见前期 [VOICE_CLONING.md](./VOICE_CLONING.md)。不做口型重建；多人交叠语音不支持独立重建，对齐有模型估计与语速调整误差。没有结果缓存，`cacheHit=false`。
+声音克隆默认使用 Fish Audio inline 模式：只上传原素材，每次从当前任务选取参考音，不创建保存音色。单席位持久复用仅供显式 `saved_test` 历史测试，见 [FISH_TESTING.md](archive/FISH_TESTING.md)。Google 克隆可显式配置启用，其额外录音规则见前期 [VOICE_CLONING.md](archive/VOICE_CLONING.md)。不做口型重建；多人交叠语音不支持独立重建，对齐有模型估计与语速调整误差。没有结果缓存，`cacheHit=false`。
 
 价格与支付供应商尚未确定，Creator/Studio unavailable；创建 checkout 返回 503，不收款、不模拟到账。真实支付 webhook 后续接入。
 

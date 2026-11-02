@@ -24,7 +24,7 @@ body {
   background: var(--bg);
   color: var(--ink);
   font-family: Arial, Helvetica, sans-serif;
-  font-size: 14px;
+  font-size: 1rem;
   -webkit-font-smoothing: antialiased;
 }
 button,
@@ -151,7 +151,7 @@ svg {
   display: flex;
   align-items: center;
   gap: 31px;
-  font-size: 13px;
+  font-size: 1rem;
 }
 .desktop-nav > a:hover {
   color: var(--accent);
@@ -228,7 +228,7 @@ svg {
   border: 1px solid #ccd1c6;
   border-radius: 7px;
   padding: 11px 16px;
-  font-size: 12px;
+  font-size: 1rem;
   font-weight: 600;
 }
 .nav-cta:hover {
@@ -242,7 +242,7 @@ svg {
   text-align: center;
 }
 .hero-eyebrow {
-  font-size: 10px;
+  font-size: 0.875rem;
   letter-spacing: 1.9px;
   display: inline-flex;
   align-items: center;
@@ -291,7 +291,7 @@ svg {
   justify-content: space-between;
   padding: 0 24px;
   border-bottom: 1px solid var(--line);
-  font-size: 12px;
+  font-size: 1rem;
 }
 .tool-card-heading > span:first-child {
   display: flex;
@@ -307,7 +307,7 @@ svg {
   box-shadow: 0 0 0 3px #edf1e7;
 }
 .tool-free {
-  font-size: 10px;
+  font-size: 0.875rem;
   color: #728164;
   border: 1px solid #dfe6d8;
   background: #f1f5ec;
@@ -345,7 +345,7 @@ svg {
   border-color: #7c9467;
 }
 .dropzone strong {
-  font-size: 13px;
+  font-size: 1rem;
   margin-top: 10px;
   max-width: 100%;
   overflow: hidden;
@@ -354,7 +354,7 @@ svg {
 }
 .dropzone-meta {
   color: #707b66;
-  font-size: 10px;
+  font-size: 0.875rem;
   margin-top: 7px;
 }
 .upload-art {
@@ -392,7 +392,7 @@ svg {
   display: flex;
   align-items: center;
   gap: 20px;
-  font-size: 10px;
+  font-size: 0.875rem;
   padding: 8px 12px;
   border: 1px solid #d4dbcc;
   border-radius: 5px;
@@ -408,7 +408,7 @@ svg {
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 9px;
+  font-size: 0.875rem;
   color: #8d9587;
   margin-top: 11px;
 }
@@ -418,7 +418,7 @@ svg {
   flex-direction: column;
 }
 .field-label {
-  font-size: 10px;
+  font-size: 0.875rem;
   font-weight: 600;
   letter-spacing: 0.1px;
   margin-bottom: 8px;
@@ -441,7 +441,7 @@ svg {
   background: transparent;
   border: 0;
   color: var(--ink);
-  font-size: 12px;
+  font-size: 1rem;
   outline-offset: 1px;
 }
 .select-wrap select:disabled {
@@ -460,7 +460,7 @@ svg {
   height: 42px;
   border-radius: 6px;
   margin-top: 19px;
-  font-size: 12px;
+  font-size: 1rem;
   font-weight: 600;
   box-shadow: 0 3px 5px #24362e15;
 }
@@ -482,7 +482,7 @@ svg {
   opacity: 0.75;
 }
 .allowance {
-  font-size: 9px;
+  font-size: 0.875rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -503,7 +503,7 @@ svg {
   justify-content: space-between;
   border-top: 1px solid var(--line);
   background: #fcfcf7;
-  font-size: 9px;
+  font-size: 0.875rem;
 }
 .tool-bottom > span {
   display: flex;
@@ -520,14 +520,14 @@ svg {
   align-items: center;
   gap: 7px;
   background: transparent;
-  font-size: 10px;
+  font-size: 0.875rem;
   color: var(--ink);
 }
 .tool-bottom button:hover {
   color: var(--accent);
 }
 .tool-caption {
-  font-size: 9px;
+  font-size: 0.875rem;
   color: #93998c;
   margin-top: 13px;
   display: flex;
@@ -548,7 +548,7 @@ svg {
   align-items: center;
   justify-content: center;
   gap: 30px;
-  font-size: 10px;
+  font-size: 0.875rem;
   color: #7f8879;
   margin-top: 27px;
 }
@@ -565,7 +565,7 @@ svg {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  font-size: 10px;
+  font-size: 0.875rem;
   color: #9aa08f;
   margin: 34px auto 0;
 }
@@ -576,7 +576,7 @@ svg {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 12px;
+  font-size: 1rem;
   margin-bottom: 8px;
 }
 .processing button {
@@ -585,7 +585,7 @@ svg {
   display: flex;
   gap: 4px;
   align-items: center;
-  font-size: 11px;
+  font-size: 0.875rem;
 }
 progress {
   appearance: none;
@@ -611,7 +611,7 @@ progress::-moz-progress-bar {
   padding: 14px 24px;
   background: #fff0e8;
   border-top: 1px solid #f1d5c5;
-  font-size: 12px;
+  font-size: 1rem;
   color: #9e4e32;
 }
 .tool-error button,
@@ -621,7 +621,7 @@ progress::-moz-progress-bar {
   gap: 5px;
   color: #9e4e32;
   background: transparent;
-  font-size: 11px;
+  font-size: 0.875rem;
   text-decoration: underline;
   margin-top: 6px;
 }
@@ -644,7 +644,7 @@ progress::-moz-progress-bar {
 }
 .result-panel p {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 1rem;
   max-width: 520px;
   margin: auto;
 }
@@ -670,7 +670,7 @@ progress::-moz-progress-bar {
 .result-panel small {
   display: block;
   color: var(--muted);
-  font-size: 10px;
+  font-size: 0.875rem;
   margin-top: 14px;
 }
 .spin {
@@ -691,7 +691,7 @@ progress::-moz-progress-bar {
 .eyebrow {
   display: inline-block;
   letter-spacing: 1.8px;
-  font-size: 9px;
+  font-size: 0.875rem;
   font-weight: 600;
   color: #879275;
 }
@@ -701,7 +701,7 @@ progress::-moz-progress-bar {
   margin-top: 13px;
 }
 .section-heading p {
-  font-size: 12px;
+  font-size: 1rem;
   color: #6e7866;
   margin-top: 14px;
 }
@@ -734,12 +734,12 @@ progress::-moz-progress-bar {
   font-style: italic;
 }
 .step h3 {
-  font-size: 14px;
+  font-size: 1rem;
   font-weight: 500;
   margin-bottom: 9px;
 }
 .step p {
-  font-size: 12px;
+  font-size: 1rem;
   color: #6e7866;
   line-height: 1.8;
 }
@@ -764,13 +764,13 @@ progress::-moz-progress-bar {
   color: #718463;
 }
 .sample-copy p {
-  font-size: 13px;
+  font-size: 1rem;
   color: #829075;
   max-width: 320px;
 }
 .sample-note {
   display: block;
-  font-size: 9px;
+  font-size: 0.875rem;
   color: #99a18f;
   margin-top: 26px;
 }
@@ -804,7 +804,7 @@ progress::-moz-progress-bar {
   position: absolute;
   left: 14px;
   top: 15px;
-  font-size: 7px;
+  font-size: 0.875rem;
   letter-spacing: 1.6px;
   color: #c4ceb170;
 }
@@ -825,7 +825,7 @@ progress::-moz-progress-bar {
   position: absolute;
   border: 1px solid #d6e1be44;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 1rem;
   padding: 10px 13px;
   box-shadow: 0 7px 12px #111c1615;
   letter-spacing: -0.2px;
@@ -849,7 +849,7 @@ progress::-moz-progress-bar {
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 8px;
+  font-size: 0.875rem;
   color: #c4ceb1;
 }
 .sample-players {
@@ -862,12 +862,12 @@ progress::-moz-progress-bar {
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 9px;
+  font-size: 0.875rem;
   margin-bottom: 9px;
 }
 .player-lang {
   margin-left: auto;
-  font-size: 8px;
+  font-size: 0.875rem;
   color: #8c9583;
 }
 .player-dot {
@@ -896,12 +896,12 @@ progress::-moz-progress-bar {
   margin-bottom: 17px;
 }
 .feature h3 {
-  font-size: 14px;
+  font-size: 1rem;
   font-weight: 500;
   margin-bottom: 10px;
 }
 .feature p {
-  font-size: 12px;
+  font-size: 1rem;
   color: #697563;
   line-height: 1.8;
 }
@@ -931,7 +931,7 @@ progress::-moz-progress-bar {
   background: #fffefa;
   border: 1px solid #e4e4d8;
   border-radius: 7px;
-  font-size: 11px;
+  font-size: 0.875rem;
   transition:
     transform 0.15s,
     border-color 0.15s;
@@ -950,7 +950,7 @@ progress::-moz-progress-bar {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 11px;
+  font-size: 0.875rem;
   color: var(--ink);
   font-weight: 500;
 }
@@ -989,11 +989,11 @@ progress::-moz-progress-bar {
   margin-bottom: 21px;
 }
 .tool-link-card h3 {
-  font-size: 13px;
+  font-size: 1rem;
   font-weight: 600;
 }
 .tool-link-card p {
-  font-size: 11px;
+  font-size: 0.875rem;
   color: #707b66;
   margin: 10px 0 22px;
   min-height: 38px;
@@ -1002,7 +1002,7 @@ progress::-moz-progress-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 10px;
+  font-size: 0.875rem;
 }
 .faq-section {
   border-top: 1px solid var(--line);
@@ -1017,7 +1017,7 @@ progress::-moz-progress-bar {
 }
 .faq-section > div > p {
   color: #697563;
-  font-size: 11px;
+  font-size: 0.875rem;
   margin-top: 20px;
 }
 .faq-section > div > p a {
@@ -1038,7 +1038,7 @@ progress::-moz-progress-bar {
   align-items: center;
   justify-content: space-between;
   padding: 20px 0;
-  font-size: 12px;
+  font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
   gap: 20px;
@@ -1056,7 +1056,7 @@ progress::-moz-progress-bar {
 }
 .faq-list details p {
   color: #697563;
-  font-size: 12px;
+  font-size: 1rem;
   line-height: 1.8;
   padding: 0 27px 20px 0;
 }
@@ -1084,7 +1084,7 @@ progress::-moz-progress-bar {
   gap: 13px;
   border-radius: 6px;
   padding: 13px 20px;
-  font-size: 11px;
+  font-size: 0.875rem;
   font-weight: 600;
   transition: background 0.2s;
 }
@@ -1123,7 +1123,7 @@ progress::-moz-progress-bar {
   border-radius: 9px;
 }
 .footer-top > div:first-child p {
-  font-size: 11px;
+  font-size: 0.875rem;
   color: #6d7862;
   line-height: 1.8;
   margin: 16px 0;
@@ -1132,18 +1132,18 @@ progress::-moz-progress-bar {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 9px;
+  font-size: 0.875rem;
   color: #9ca38e;
 }
 .footer-top h3 {
-  font-size: 11px;
+  font-size: 0.875rem;
   font-weight: 600;
   margin: 6px 0 19px;
 }
 .footer-top > div:not(:first-child) > a {
   display: block;
   color: #6d7862;
-  font-size: 10px;
+  font-size: 0.875rem;
   margin-bottom: 12px;
 }
 .footer-top a:hover {
@@ -1156,12 +1156,12 @@ progress::-moz-progress-bar {
   border-top: 1px solid #e1e5d8;
   padding-block: 20px;
   color: #a0a791;
-  font-size: 9px;
+  font-size: 0.875rem;
 }
 .breadcrumbs {
   display: flex;
   gap: 12px;
-  font-size: 10px;
+  font-size: 0.875rem;
   color: #909885;
   margin-top: 24px;
   align-items: center;
@@ -1184,13 +1184,13 @@ progress::-moz-progress-bar {
   margin-top: 16px;
 }
 .tool-hero .hero-description {
-  font-size: 15px;
+  font-size: 1.0625rem;
 }
 .tool-intro {
   max-width: 700px;
   padding-top: 42px;
   text-align: center;
-  font-size: 13px;
+  font-size: 1rem;
   color: #697563;
 }
 .guide-grid {
@@ -1232,7 +1232,7 @@ progress::-moz-progress-bar {
 }
 .page-heading p {
   color: #697563;
-  font-size: 14px;
+  font-size: 1rem;
   margin: 20px auto 0;
 }
 .page-heading .button {
@@ -1265,17 +1265,17 @@ progress::-moz-progress-bar {
 }
 .language-grid > a > span:nth-of-type(2) {
   color: #969d8c;
-  font-size: 12px;
+  font-size: 1rem;
 }
 .language-grid-cta {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 10px;
+  font-size: 0.875rem;
   margin-top: 27px;
 }
 .catalog-note {
-  font-size: 11px;
+  font-size: 0.875rem;
   color: #969d8c;
   text-align: center;
   padding-block: 25px 65px;
@@ -1308,7 +1308,7 @@ progress::-moz-progress-bar {
   color: white;
   padding: 7px 11px;
   border-radius: 100px;
-  font-size: 8px;
+  font-size: 0.875rem;
   letter-spacing: 0.7px;
 }
 .plan-name {
@@ -1316,7 +1316,7 @@ progress::-moz-progress-bar {
   font-weight: 600;
 }
 .pricing-card > p {
-  font-size: 11px;
+  font-size: 0.875rem;
   color: #6d7862;
   margin-top: 12px;
 }
@@ -1328,13 +1328,13 @@ progress::-moz-progress-bar {
 }
 .price span {
   font-family: Arial, Helvetica, sans-serif;
-  font-size: 11px;
+  font-size: 0.875rem;
   color: #919a85;
   margin-left: 7px;
   letter-spacing: 0;
 }
 .plan-minutes {
-  font-size: 11px;
+  font-size: 0.875rem;
   color: #7d8c6f;
 }
 .pricing-card .button {
@@ -1351,7 +1351,7 @@ progress::-moz-progress-bar {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  font-size: 11px;
+  font-size: 0.875rem;
   margin-bottom: 16px;
   color: #7d896f;
   line-height: 1.5;
@@ -1364,12 +1364,12 @@ progress::-moz-progress-bar {
 }
 .pricing-note {
   color: #969d8c;
-  font-size: 11px;
+  font-size: 0.875rem;
   text-align: center;
   margin: 22px 0 65px;
 }
 .checkout-error {
-  font-size: 13px;
+  font-size: 1rem;
   padding: 16px;
   color: #9e4e32;
   background: #fff0e8;
@@ -1396,7 +1396,7 @@ progress::-moz-progress-bar {
   margin: 38px 0 15px;
 }
 .article p:not(.article-lead) {
-  font-size: 14px;
+  font-size: 1rem;
   color: #7b8770;
   line-height: 1.9;
   margin-block: 15px;
@@ -1421,7 +1421,7 @@ progress::-moz-progress-bar {
   margin: 16px 0;
 }
 .journal-list p {
-  font-size: 13px;
+  font-size: 1rem;
   color: #909a80;
 }
 .journal-list .text-link {
@@ -1468,7 +1468,7 @@ progress::-moz-progress-bar {
     font-size: 61px;
   }
   .hero-description {
-    font-size: 14px;
+    font-size: 1rem;
   }
   .tool-body {
     gap: 20px;
@@ -1517,7 +1517,7 @@ progress::-moz-progress-bar {
     padding: 24px 20px;
   }
   .plan-badge {
-    font-size: 7px;
+    font-size: 0.875rem;
   }
   .closing-cta {
     padding: 35px;
@@ -1571,13 +1571,13 @@ progress::-moz-progress-bar {
   .mobile-nav nav > a {
     display: block;
     padding: 12px;
-    font-size: 13px;
+    font-size: 1rem;
   }
   .hero {
     padding-top: 28px;
   }
   .hero-eyebrow {
-    font-size: 8px;
+    font-size: 0.875rem;
     letter-spacing: 1.3px;
     padding: 7px 10px;
   }
@@ -1588,7 +1588,7 @@ progress::-moz-progress-bar {
     margin-top: 19px;
   }
   .hero-description {
-    font-size: 12px;
+    font-size: 1rem;
     margin-top: 13px;
     line-height: 1.7;
     padding-inline: 5px;
@@ -1605,10 +1605,10 @@ progress::-moz-progress-bar {
   .tool-card-heading {
     height: 40px;
     padding-inline: 14px;
-    font-size: 10px;
+    font-size: 0.875rem;
   }
   .tool-free {
-    font-size: 8px;
+    font-size: 0.875rem;
     padding: 4px 7px;
   }
   .live-dot {
@@ -1644,16 +1644,16 @@ progress::-moz-progress-bar {
     width: 20px;
   }
   .dropzone strong {
-    font-size: 12px;
+    font-size: 1rem;
     margin-top: 9px;
   }
   .dropzone-meta {
-    font-size: 9px;
+    font-size: 0.875rem;
     margin-top: 5px;
   }
   .choose-button {
     margin-top: 9px;
-    font-size: 10px;
+    font-size: 0.875rem;
     padding: 7px 12px;
   }
   .file-security {
@@ -1668,7 +1668,7 @@ progress::-moz-progress-bar {
   .field-label {
     grid-column: 1;
     grid-row: 1;
-    font-size: 9px;
+    font-size: 0.875rem;
     margin: 0;
   }
   .target-label {
@@ -1686,7 +1686,7 @@ progress::-moz-progress-bar {
     grid-column: 2;
   }
   .select-wrap select {
-    font-size: 10px;
+    font-size: 1rem;
   }
   .select-wrap > svg {
     width: 13px;
@@ -1696,17 +1696,17 @@ progress::-moz-progress-bar {
     grid-row: 3;
     margin-top: 4px;
     height: 41px;
-    font-size: 12px;
+    font-size: 1rem;
   }
   .allowance {
     grid-column: 1/-1;
     grid-row: 4;
     margin-top: 2px;
-    font-size: 9px;
+    font-size: 0.875rem;
   }
   .tool-bottom {
     padding: 11px 13px;
-    font-size: 8px;
+    font-size: 0.875rem;
     gap: 6px;
   }
   .tool-bottom > span {
@@ -1717,7 +1717,7 @@ progress::-moz-progress-bar {
     width: 11px;
   }
   .tool-bottom button {
-    font-size: 9px;
+    font-size: 0.875rem;
     white-space: nowrap;
     gap: 4px;
   }
@@ -1725,13 +1725,13 @@ progress::-moz-progress-bar {
     width: 11px;
   }
   .tool-caption {
-    font-size: 8px;
+    font-size: 0.875rem;
     margin-top: 10px;
     padding-inline: 5px;
   }
   .hero-benefits {
     gap: 13px;
-    font-size: 8px;
+    font-size: 0.875rem;
     margin-top: 19px;
     flex-wrap: wrap;
   }
@@ -1744,7 +1744,7 @@ progress::-moz-progress-bar {
   }
   .see-how {
     margin-top: 24px;
-    font-size: 8px;
+    font-size: 0.875rem;
     gap: 5px;
   }
   .section {
@@ -1757,12 +1757,12 @@ progress::-moz-progress-bar {
     font-size: 31px;
   }
   .section-heading p {
-    font-size: 11px;
+    font-size: 0.875rem;
     max-width: 260px;
     margin: 12px auto 0;
   }
   .eyebrow {
-    font-size: 8px;
+    font-size: 0.875rem;
     letter-spacing: 1.5px;
   }
   .steps-grid {
@@ -1798,12 +1798,12 @@ progress::-moz-progress-bar {
     width: 21px;
   }
   .step h3 {
-    font-size: 13px;
+    font-size: 1rem;
     margin-bottom: 4px;
     padding-top: 2px;
   }
   .step p {
-    font-size: 11px;
+    font-size: 0.875rem;
     grid-column: 2;
   }
   .sample-section {
@@ -1818,10 +1818,10 @@ progress::-moz-progress-bar {
     margin: 13px 0 15px;
   }
   .sample-copy p {
-    font-size: 12px;
+    font-size: 1rem;
   }
   .sample-note {
-    font-size: 8px;
+    font-size: 0.875rem;
     margin-top: 15px;
   }
   .sample-visual {
@@ -1847,11 +1847,11 @@ progress::-moz-progress-bar {
     margin: 0;
   }
   .feature h3 {
-    font-size: 13px;
+    font-size: 1rem;
     margin: 0;
   }
   .feature p {
-    font-size: 11px;
+    font-size: 0.875rem;
     grid-column: 2;
   }
   .language-section {
@@ -1862,11 +1862,11 @@ progress::-moz-progress-bar {
   }
   .language-chips a {
     padding: 10px 11px;
-    font-size: 10px;
+    font-size: 0.875rem;
     gap: 7px;
   }
   .language-chips a > span {
-    font-size: 14px;
+    font-size: 1rem;
   }
   .language-chips a > svg {
     width: 11px;
@@ -1886,15 +1886,15 @@ progress::-moz-progress-bar {
     margin-bottom: 17px;
   }
   .tool-link-card h3 {
-    font-size: 11px;
+    font-size: 0.875rem;
   }
   .tool-link-card p {
-    font-size: 10px;
+    font-size: 0.875rem;
     min-height: 46px;
     margin: 9px 0 16px;
   }
   .tool-link-card > span {
-    font-size: 9px;
+    font-size: 0.875rem;
   }
   .faq-section {
     grid-template-columns: 1fr;
@@ -1904,15 +1904,15 @@ progress::-moz-progress-bar {
     font-size: 32px;
   }
   .faq-section > div > p {
-    font-size: 11px;
+    font-size: 0.875rem;
     margin-top: 13px;
   }
   .faq-list summary {
-    font-size: 11px;
+    font-size: 0.875rem;
     padding-block: 17px;
   }
   .faq-list details p {
-    font-size: 11px;
+    font-size: 0.875rem;
   }
   .closing-cta {
     flex-direction: column;
@@ -1925,7 +1925,7 @@ progress::-moz-progress-bar {
     font-size: 33px;
   }
   .closing-cta .button {
-    font-size: 11px;
+    font-size: 0.875rem;
   }
   .footer {
     padding-top: 34px;
@@ -1945,12 +1945,12 @@ progress::-moz-progress-bar {
     margin-bottom: 16px;
   }
   .footer-bottom {
-    font-size: 8px;
+    font-size: 0.875rem;
     gap: 15px;
     padding-block: 17px;
   }
   .breadcrumbs {
-    font-size: 9px;
+    font-size: 0.875rem;
     margin-top: 19px;
     gap: 8px;
     flex-wrap: wrap;
@@ -1966,10 +1966,10 @@ progress::-moz-progress-bar {
     margin-top: 14px;
   }
   .tool-hero .hero-description {
-    font-size: 12px;
+    font-size: 1rem;
   }
   .tool-intro {
-    font-size: 12px;
+    font-size: 1rem;
     padding-top: 28px;
   }
   .page-heading {
@@ -1979,7 +1979,7 @@ progress::-moz-progress-bar {
     font-size: 43px;
   }
   .page-heading p {
-    font-size: 12px;
+    font-size: 1rem;
     margin-top: 17px;
   }
   .language-grid {
@@ -1993,15 +1993,15 @@ progress::-moz-progress-bar {
     font-size: 28px;
   }
   .language-grid h2 {
-    font-size: 15px;
+    font-size: 1.0625rem;
     margin-top: 17px;
   }
   .language-grid-cta {
-    font-size: 9px;
+    font-size: 0.875rem;
     margin-top: 22px;
   }
   .catalog-note {
-    font-size: 10px;
+    font-size: 0.875rem;
     padding-block: 23px 45px;
   }
   .pricing-grid {
@@ -2015,17 +2015,17 @@ progress::-moz-progress-bar {
     padding: 29px;
   }
   .plan-badge {
-    font-size: 8px;
+    font-size: 0.875rem;
   }
   .pricing-card .button {
-    font-size: 12px;
+    font-size: 1rem;
   }
   .pricing-card li {
-    font-size: 12px;
+    font-size: 1rem;
   }
   .pricing-note {
     margin-bottom: 43px;
-    font-size: 10px;
+    font-size: 0.875rem;
     line-height: 1.7;
   }
   .article {
@@ -2043,7 +2043,7 @@ progress::-moz-progress-bar {
     margin-top: 30px;
   }
   .article p:not(.article-lead) {
-    font-size: 13px;
+    font-size: 1rem;
     line-height: 1.8;
   }
   .journal-list {
@@ -2056,7 +2056,7 @@ progress::-moz-progress-bar {
     font-size: 27px;
   }
   .journal-list p {
-    font-size: 12px;
+    font-size: 1rem;
   }
   .result-panel {
     padding: 23px 17px;
@@ -2065,24 +2065,24 @@ progress::-moz-progress-bar {
     font-size: 28px;
   }
   .result-panel p {
-    font-size: 11px;
+    font-size: 0.875rem;
   }
   .result-actions {
     gap: 8px;
     flex-wrap: wrap;
   }
   .result-actions .button {
-    font-size: 10px;
+    font-size: 0.875rem;
     padding: 11px 14px;
   }
   .processing {
     padding: 0 14px 14px;
   }
   .processing > div {
-    font-size: 11px;
+    font-size: 0.875rem;
   }
   .tool-error {
-    font-size: 11px;
+    font-size: 0.875rem;
     padding: 12px 14px;
   }
 }
@@ -2104,7 +2104,7 @@ progress::-moz-progress-bar {
   justify-content: space-between;
   gap: 12px;
   padding: 14px 24px;
-  font-size: 11px;
+  font-size: 0.875rem;
   background: #f5f0e4;
   border-top: 1px solid #e5dfd0;
 }
@@ -2127,7 +2127,7 @@ progress::-moz-progress-bar {
   justify-content: center;
   flex-wrap: wrap;
   gap: 10px;
-  font-size: 12px;
+  font-size: 1rem;
 }
 .video-recovery input {
   margin-top: 10px;
@@ -2135,7 +2135,7 @@ progress::-moz-progress-bar {
 
 .video-recovery input {
   max-width: 100%;
-  font-size: 11px;
+  font-size: 0.875rem;
   padding: 8px 0;
 }
 
@@ -2168,7 +2168,7 @@ progress::-moz-progress-bar {
 }
 .account-card p {
   margin: 12px 0;
-  font-size: 14px;
+  font-size: 1rem;
   line-height: 1.65;
 }
 .auth-form {
@@ -2178,7 +2178,7 @@ progress::-moz-progress-bar {
 .auth-form label {
   display: grid;
   gap: 8px;
-  font-size: 13px;
+  font-size: 1rem;
   font-weight: 600;
 }
 .auth-form input,
@@ -2224,17 +2224,17 @@ progress::-moz-progress-bar {
 .account-error,
 .human-error {
   color: #9d2c26;
-  font-size: 13px;
+  font-size: 1rem;
 }
 .account-notice {
   color: #416032;
-  font-size: 14px;
+  font-size: 1rem;
 }
 .account-demo-note {
   padding: 14px;
   border-radius: 6px;
   background: #f2f1e8;
-  font-size: 12px;
+  font-size: 1rem;
   color: #666b5d;
 }
 .account-table-wrap {
@@ -2243,7 +2243,7 @@ progress::-moz-progress-bar {
 .account-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 1rem;
 }
 .account-table th,
 .account-table td {
@@ -2275,7 +2275,7 @@ progress::-moz-progress-bar {
   align-items: center;
   gap: 6px;
   white-space: nowrap;
-  font-size: 12px;
+  font-size: 1rem;
 }
 .pricing-card .pending-price {
   font-size: 34px;
@@ -2288,7 +2288,7 @@ progress::-moz-progress-bar {
   background: #fbfaf5;
 }
 .trial-verification p {
-  font-size: 12px;
+  font-size: 1rem;
   margin-bottom: 10px;
 }
 .human-verification {
@@ -2298,16 +2298,16 @@ progress::-moz-progress-bar {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: 1rem;
 }
 .human-verification small {
   display: block;
   margin-top: 6px;
-  font-size: 11px;
+  font-size: 0.875rem;
   color: #757c6b;
 }
 .credit-rate {
-  font-size: 11px;
+  font-size: 0.875rem;
   padding: 12px 24px;
   line-height: 1.5;
   color: #727967;
@@ -2335,7 +2335,7 @@ progress::-moz-progress-bar {
 }
 .clone-consents {
   margin-top: 14px;
-  font-size: 12px;
+  font-size: 1rem;
   line-height: 1.55;
   color: #555;
 }
@@ -2360,7 +2360,7 @@ progress::-moz-progress-bar {
   display: block;
   width: 100%;
   margin-top: 5px;
-  font-size: 11px;
+  font-size: 0.875rem;
 }
 .consent-actions {
   display: flex;
@@ -2392,5 +2392,124 @@ progress::-moz-progress-bar {
   }
   .settings-column:has(#voice-mode) .allowance {
     grid-row: 7;
+  }
+}
+
+/* Readable media previews and explicit sample actions. */
+.sample-grid {
+  grid-template-columns: 0.8fr 1.4fr;
+  gap: 40px;
+  padding-inline: 0;
+}
+.sample-copy p,
+.sample-note {
+  color: #53634b;
+}
+.sample-card {
+  min-width: 0;
+  padding: 18px;
+}
+.sample-media-heading {
+  font-size: 1rem;
+  margin-bottom: 12px;
+}
+.sample-media-heading:not(:first-child) {
+  margin-top: 24px;
+}
+.sample-videos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.sample-videos > div,
+.sample-players > div {
+  min-width: 0;
+}
+.sample-videos p {
+  font-size: 0.875rem;
+  margin-bottom: 8px;
+}
+.sample-videos video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #344a3a;
+  border-radius: 8px;
+}
+.sample-players {
+  padding: 0;
+  gap: 16px;
+}
+.sample-players audio {
+  height: 44px;
+}
+.sample-players > div > span {
+  flex-wrap: wrap;
+}
+.player-lang {
+  color: #53634b;
+}
+.sample-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tool-bottom {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.tool-bottom .sample-actions button {
+  border: 1px solid #ccd1c6;
+  border-radius: 6px;
+  padding: 10px 12px;
+  min-height: 44px;
+}
+.loaded-sample {
+  border-top: 1px solid var(--line);
+  padding: 18px 24px;
+  text-align: left;
+}
+.loaded-sample p {
+  margin-bottom: 12px;
+}
+.loaded-sample video,
+.loaded-sample audio {
+  display: block;
+  width: 100%;
+  max-width: 480px;
+  border-radius: 8px;
+}
+.select-wrap {
+  min-height: 44px;
+}
+.tool-card-heading {
+  height: auto;
+  min-height: 52px;
+  gap: 12px;
+  padding-block: 12px;
+}
+.tool-free {
+  flex-shrink: 0;
+}
+@media (max-width: 700px) {
+  .sample-grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .sample-videos,
+  .sample-players {
+    grid-template-columns: 1fr;
+  }
+  .tool-card-heading {
+    flex-wrap: wrap;
+  }
+  .tool-bottom .sample-actions button {
+    white-space: normal;
+  }
+  .settings-column {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .select-wrap select {
+    min-width: 0;
   }
 }

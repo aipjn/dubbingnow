@@ -38,7 +38,7 @@ test("logged-in dubbing consumes credits and records settlement", async ({
   await page.goto("/audio-dubbing");
   await expect(page.getByText("500 credits available")).toBeVisible();
   await expect(page.getByLabel("Demo verification")).toHaveCount(0);
-  await page.getByRole("button", { name: "Try a sample" }).click();
+  await page.getByRole("button", { name: "Load audio example" }).click();
   await page.getByRole("button", { name: "Dub Audio", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Meet your sample result." }),
@@ -76,7 +76,7 @@ test("guest trial cannot be started without verification or reused after complet
   page,
 }) => {
   await page.goto("/audio-dubbing");
-  await page.getByRole("button", { name: "Try a sample" }).click();
+  await page.getByRole("button", { name: "Load audio example" }).click();
   await expect(
     page.getByRole("button", { name: "Dub Audio Free" }),
   ).toBeDisabled();

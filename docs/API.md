@@ -1,6 +1,8 @@
 # DubbingNow API v2 契约（路径仍为 /v1）
 
-本仓库已实现网页、Auth0 客户端和服务端验证、Turnstile 服务端验证、SQLite 用户与积分、私有上传、持久任务队列和 Google 配音 worker。支付价格/供应商尚未确定，充值接口保留契约并明确返回不可用。部署与当前能力范围见 [BACKEND.md](./BACKEND.md)。`docs/openapi.yaml` 是结构化契约；`lib/api/types.ts` 是前端类型。未配置 API URL 时使用本地演示，明确标注身份模拟、固定配音样例和模拟验证；它没有真正鉴别人类，也不能作为正式积分服务。
+> 当前生产架构与配置以 [项目交接手册](PROJECT_HANDOVER.md) 为准：Vercel Queues + D1/R2，Fish 克隆默认使用本次任务的 inline 参考音。本文中的 SQLite / 独立 worker / 单席位音色章节适用于本地或显式测试模式。
+
+本仓库已实现网页、Auth0 客户端和服务端验证、Turnstile 服务端验证、SQLite 用户与积分、私有上传、持久任务队列和 Google 配音 worker。支付价格/供应商尚未确定，充值接口保留契约并明确返回不可用。部署与当前能力范围见 [BACKEND.md](BACKEND.md)。`docs/openapi.yaml` 是结构化契约；`lib/api/types.ts` 是前端类型。未配置 API URL 时使用本地演示，明确标注身份模拟、固定配音样例和模拟验证；它没有真正鉴别人类，也不能作为正式积分服务。
 
 ## 登录：Auth0 Universal Login
 
@@ -109,10 +111,10 @@ API全部 no-store，TLS，CORS 仅允许本站 origins、Authorization/Content-
 
 ## 验证状态与后端验收
 
-`npm test` 已覆盖真实 SQLite 结算、真实 RS256 签名验证和 FFmpeg 音频对齐；身份资料、Siteverify 和 Google HTTP 响应由测试替身提供。真实 Auth0 租户、Turnstile 与 Google key 尚未配置，以下外部服务验收需配置后完成，支付验收待后续实现。
+`npm test` 已覆盖真实 SQLite 结算、真实 RS256 签名验证和 FFmpeg 音频对齐；身份资料、Siteverify 和 Google HTTP 响应由测试替身提供。真实服务已配置并有本机及云存储短样验收记录；正式域名完整业务验收仍待完成，具体依据见 [功能验收记录](FUNCTIONAL_STATUS.md)。以下为验收要求，支付验收待后续实现。
 
 - 真实 Auth0 tenant 完成 signup/login/logout、社交连接、callback state/PKCE和刷新；无效签名/issuer/audience、过期token、IDtoken和浏览器伪造role全部拒绝。
-- 并发首次 /users/me只赠送一次500；退出再登录/更换邮箱不重复；暂停账号即时禁止所有敏感操作。
+- 并发首次 /users/me 按策略只赠送一次（真实账户默认上限 50，演示模式 500）；退出再登录/更换邮箱不重复；暂停账号即时禁止所有敏感操作。
 - Siteverify 成功才发绑定授权；错误action/hostname、超时、重复token都失败；清浏览器/多标签不能无限试用。
 - 超过30秒的游客音频、原视频timeline或伪造probe时长不能创建；授权过期后重验；失败/取消只恢复一次。
 - 同一个幂等key并发返回同job；同quote换key不建第二个job；输入不同key冲突；响应丢失后的重试只扣一次。
@@ -127,7 +129,7 @@ API全部 no-store，TLS，CORS 仅允许本站 origins、Authorization/Content-
 
 `QuoteRequest` / `CreateJobRequest` 新增可选 `voiceMode: "preset" | "clone"` 和 `consentUploads: [{speaker, uploadId}]`。省略 mode 的旧请求使用 preset。clone 模式须先走普通私有上传流程上传每位说话人的真实授权录音，speaker 为首次发声顺序的零起始编号（0–7），上传须属于当前 actor，完成且不超过 30 秒 / 2 MB。speaker 和上传 ID 不能重复，不能复用原素材上传。preset 模式不得附带授权上传。报价与创建均验证所有权和上传状态，worker 按识别结果检查每位说话人的参考与授权是否齐全；Google 验证授权声明及说话人一致性。克隆失败不切换预设声音，按已有失败流程退款。JobResult 新增可选 `voiceMode`。演示实现拒绝克隆请求。
 
-授权上传和源上传一样，在未结算任务运行期间保留；随后按同一保留期清理。克隆 key 仅在任务内存中，不写入公开 API、数据库结果或计时文件。详细参考句筛选和耗时报告见 [VOICE_CLONING.md](./VOICE_CLONING.md)。
+授权上传和源上传一样，在未结算任务运行期间保留；随后按同一保留期清理。克隆 key 仅在任务内存中，不写入公开 API、数据库结果或计时文件。详细参考句筛选和耗时报告见 [VOICE_CLONING.md](archive/VOICE_CLONING.md)。
 
 ## Fish 单席位模式（2026-10-18）
 
@@ -135,7 +137,7 @@ API全部 no-store，TLS，CORS 仅允许本站 origins、Authorization/Content-
 
 以下固定声音行为仅适用于显式 `FISH_VOICE_MODE=saved_test`，其 capabilities 的 `singleVoiceTest` 为 `true`：
 
-首个单人素材选取参考并注册唯一 Fish 音色，后续 clone 任务固定复用保存的 ID，包括换素材、刷新、取消及失败重试。已有保存音色时无需新素材具备 10 秒参考；多说话人任务在测试模式下明确失败退款。所有 Fish 克隆创建只能经过 `.data/fish-test-voice.json` 的持久创建记录和文件锁，不提供自动删除、换音色或重复创建路径。创建请求响应丢失时以唯一标题核对远端，不盲目重试。详见 [FISH_TESTING.md](./FISH_TESTING.md)。
+首个单人素材选取参考并注册唯一 Fish 音色，后续 clone 任务固定复用保存的 ID，包括换素材、刷新、取消及失败重试。已有保存音色时无需新素材具备 10 秒参考；多说话人任务在测试模式下明确失败退款。所有 Fish 克隆创建只能经过 `.data/fish-test-voice.json` 的持久创建记录和文件锁，不提供自动删除、换音色或重复创建路径。创建请求响应丢失时以唯一标题核对远端，不盲目重试。详见 [FISH_TESTING.md](archive/FISH_TESTING.md)。
 
 ## Cloudflare 传输
 

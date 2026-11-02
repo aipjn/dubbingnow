@@ -1,6 +1,8 @@
 # 声音克隆 preview：参考句筛选与耗时验证
 
-> 2026-10-18 更新：默认克隆已切换 Fish Audio，并按单席位要求持久复用一个音色。下面 Google 授权录音流程与 10 月 14 日基准为前期实现记录；当前接入见 [FISH_TESTING.md](./FISH_TESTING.md)。
+> 历史记录：配置、价格与能力以当时日期为准。当前生产行为及待办见 [项目现状](../CURRENT_STATUS.md)。
+
+> 2026-10-18 更新：默认克隆已切换 Fish Audio，并按单席位要求持久复用一个音色。下面 Google 授权录音流程与 10 月 14 日基准为前期实现记录；当前接入见 [FISH_TESTING.md](FISH_TESTING.md)。
 
 本轮实现采用 Google Gemini Voices API 的 stateless replication；没有引入新供应商、GPU 或训练任务。克隆接入和候选筛选已通过测试替身验证。真实 Google 识别、翻译和预设 TTS 已实测；**真人克隆音色相似度、授权验证通过率和克隆额外耗时尚未实测**，需要原说话人测试素材及其本人录制的授权声明。
 

@@ -11,9 +11,9 @@ test("sample upload completes in the current page and can start another job", as
     "AI Dubbing Online.",
   );
   await expect(page.getByText("30s free trial")).toBeVisible();
-  await page.getByRole("button", { name: "Try a sample" }).click();
+  await page.getByRole("button", { name: "Load audio example" }).click();
   await expect(page.getByText("a-story-worth-sharing.wav")).toBeVisible();
-  await page.getByRole("button", { name: "Dub Video Free" }).click();
+  await page.getByRole("button", { name: "Dub Audio Free" }).click();
   await expect(
     page.getByRole("heading", { name: "Meet your sample result." }),
   ).toBeVisible({ timeout: 15_000 });
@@ -46,8 +46,8 @@ test("cancelling returns demo allowance and enables a fresh job", async ({
   await page.goto("/");
   await unlock(page);
   await expect(page.getByText("30s free trial")).toBeVisible();
-  await page.getByRole("button", { name: "Try a sample" }).click();
-  await page.getByRole("button", { name: "Dub Video Free" }).click();
+  await page.getByRole("button", { name: "Load audio example" }).click();
+  await page.getByRole("button", { name: "Dub Audio Free" }).click();
   await expect(
     page.getByRole("progressbar", { name: "Dubbing progress" }),
   ).toBeVisible();
@@ -58,7 +58,7 @@ test("cancelling returns demo allowance and enables a fresh job", async ({
   await expect(page.getByText("30s free trial")).toBeVisible();
   await unlock(page);
   await expect(
-    page.getByRole("button", { name: "Dub Video Free" }),
+    page.getByRole("button", { name: "Dub Audio Free" }),
   ).toBeEnabled();
 });
 
@@ -73,7 +73,7 @@ test("audio tool rejects video and explicit same-language dubbing is rejected", 
     buffer: Buffer.from("fake"),
   });
   await expect(page.locator(".tool-error")).toContainText("MP3 or WAV");
-  await page.getByRole("button", { name: "Try a sample" }).click();
+  await page.getByRole("button", { name: "Load audio example" }).click();
   await page.getByLabel("Original language").selectOption("es");
   await page.getByRole("button", { name: "Dub Audio Free" }).click();
   await expect(page.locator(".tool-error")).toContainText(
@@ -154,3 +154,88 @@ async function unlock(page: import("@playwright/test").Page) {
     page.getByRole("button", { name: "Unlock free trial" }),
   ).toHaveCount(0);
 }
+
+test("video and audio demos play on desktop and mobile without horizontal overflow", async ({
+  page,
+}, testInfo) => {
+  await page.goto("/");
+  for (const label of [
+    "English original video sample",
+    "Spanish dubbed video sample",
+    "English original sample",
+    "Spanish dubbed sample",
+  ]) {
+    const player = page.getByLabel(label, { exact: true });
+    await player.scrollIntoViewIfNeeded();
+    await player.evaluate(async (element) => {
+      const media = element as HTMLMediaElement;
+      media.muted = true;
+      await media.play();
+    });
+    await expect
+      .poll(() =>
+        player.evaluate((element) => (element as HTMLMediaElement).currentTime),
+      )
+      .toBeGreaterThan(0);
+    await player.evaluate((element) => (element as HTMLMediaElement).pause());
+  }
+  for (const width of [1440, 768, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBeLessThanOrEqual(width);
+    expect(
+      await page
+        .locator(".select-wrap select")
+        .first()
+        .evaluate((element) => parseFloat(getComputedStyle(element).fontSize)),
+    ).toBeGreaterThanOrEqual(16);
+    await page.screenshot({
+      path: testInfo.outputPath(`home-${width}.png`),
+      fullPage: true,
+    });
+    if (width === 1440 || width === 390) {
+      await page
+        .locator(".hero")
+        .screenshot({ path: testInfo.outputPath(`hero-${width}.png`) });
+      await page
+        .locator(".sample-section")
+        .screenshot({ path: testInfo.outputPath(`samples-${width}.png`) });
+    }
+  }
+});
+
+test("sample actions show loading, preview, next steps, and a recoverable fetch error", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.getByText("30s free trial")).toBeVisible();
+  await page.route("**/demo/english.mp4", async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    await route.continue();
+  });
+  await page.getByRole("button", { name: "Load video example" }).click();
+  await expect(page.locator(".sample-actions")).toHaveAttribute(
+    "aria-busy",
+    "true",
+  );
+  await expect(page.getByRole("status")).toContainText("Video example loaded");
+  await expect(page.getByLabel("Loaded video example preview")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Dub Video Free" }),
+  ).toBeDisabled();
+  await page.getByRole("button", { name: "Load audio example" }).click();
+  await expect(page.getByRole("status")).toContainText("Audio example loaded");
+  await expect(page.getByLabel("Loaded audio example preview")).toBeVisible();
+  await expect(page.getByLabel("Loaded video example preview")).toHaveCount(0);
+  await page.route("**/demo/english.wav", (route) =>
+    route.fulfill({ status: 503 }),
+  );
+  await page.getByRole("button", { name: "Load audio example" }).click();
+  await expect(page.locator(".tool-error[role=alert]")).toContainText(
+    "The sample is unavailable",
+  );
+  await expect(
+    page.getByRole("button", { name: "Load audio example" }),
+  ).toBeEnabled();
+});

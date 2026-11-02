@@ -110,7 +110,7 @@ D1 通过 REST API 访问，R2 通过 AWS S3 SDK 和签名 URL 访问，**本项
 | `STREAM_TEXT_PIPELINE`                                | 配为 `true`，但当前 inline 路径不触发提前逐句合成    |
 | `MAX_JOB_RUN_SECONDS`                                 | 240，函数上限 300 秒                                 |
 
-这些模型名称是本项目配置快照，不是对供应商长期可用性或价格的保证。价格历史研究见 [当前链路成本](CURRENT_PIPELINE_COST_2026-10-19.md)；其中旧保存音色测试的说明不代表现在的 inline 实现，报价也不是本日账单。
+这些模型名称是本项目配置快照，不是对供应商长期可用性或价格的保证。价格历史研究见 [当前链路成本](archive/CURRENT_PIPELINE_COST_2026-10-19.md)；其中旧保存音色测试的说明不代表现在的 inline 实现，报价也不是本日账单。
 
 **为什么当前不直接流式提前合成：** `server/dubbing-pipeline.ts` 要求已有保存音色、`singleVoiceTest` 等条件才进入实验流式分支。当前生产会先完成原音分析、参考音筛选和校验，再用本次参考音合成。只打开一个环境开关不会改变这些条件。
 

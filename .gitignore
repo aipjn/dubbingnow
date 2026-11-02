@@ -13,3 +13,4 @@ __pycache__/
 .vercel/
 .DS_Store
 vendor/media/
+.vercel

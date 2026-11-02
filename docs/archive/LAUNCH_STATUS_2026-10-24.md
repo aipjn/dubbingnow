@@ -1,10 +1,12 @@
 # 发布复核：2026-10-24
 
-后续功能修复与未交付项以 [当前功能状态](FUNCTIONAL_STATUS.md) 为准。固定测试声音已改为显式测试模式；正式默认 Fish inline reference，并已完成真实 Google/Fish + D1/R2 短样测试。Auth0 配置已保存，真实登录、D1 建账、50 积分赠额、刷新恢复、退出重登及赠额去重均已通过；真实新邮箱经 API 注册、后台重发邮件验证、密码登录和 17 秒克隆任务已通过；前台自动发码、收码及验证码提交已通过，新流程止于设置新密码前。不能把本文件的基础设施与旧测试结论表述为“只剩部署”。
+> 历史记录：配置、价格与能力以当时日期为准。当前生产行为及待办见 [项目现状](../CURRENT_STATUS.md)。
+
+后续功能修复与未交付项以 [当前功能状态](../FUNCTIONAL_STATUS.md) 为准。固定测试声音已改为显式测试模式；正式默认 Fish inline reference，并已完成真实 Google/Fish + D1/R2 短样测试。Auth0 配置已保存，真实登录、D1 建账、50 积分赠额、刷新恢复、退出重登及赠额去重均已通过；真实新邮箱经 API 注册、后台重发邮件验证、密码登录和 17 秒克隆任务已通过；前台自动发码、收码及验证码提交已通过，新流程止于设置新密码前。不能把本文件的基础设施与旧测试结论表述为“只剩部署”。
 
 Google 识别翻译 + Fish 克隆方案保持不变。今天已修复本轮发现的代码与发布检查问题，并完成以下验证；目前没有部署到公网。
 
-后续已确认域名 `dubbingnow.com`、目标平台 Vercel、GitHub 仓库 `aipjn/dubbingnow`。现有持久后端需要另行运行或适配云存储和任务执行，不能直接照搬到普通 Vercel Functions，详见 [Vercel 部署说明](VERCEL_DEPLOYMENT.md)。下方发布条件中的服务器部分应按此更新理解。
+后续已确认域名 `dubbingnow.com`、目标平台 Vercel、GitHub 仓库 `aipjn/dubbingnow`。现有持久后端需要另行运行或适配云存储和任务执行，不能直接照搬到普通 Vercel Functions，详见 [Vercel 部署说明](../VERCEL_DEPLOYMENT.md)。下方发布条件中的服务器部分应按此更新理解。
 
 ## 本轮修复
 
@@ -47,4 +49,4 @@ Google 识别翻译 + Fish 克隆方案保持不变。今天已修复本轮发�
 
 早先本地 `npm run preflight -- --require-build` 按预期拒绝测试环境。随后已补齐 Auth0 audience、Cloudflare 存储和 inline 复刻配置；当前构建与本地配置匹配并通过构建，但生产 HTTPS、执行方式与运营资料仍需落实，尚未通过公网发布验收。没有通过关闭检查来假装已具备生产配置。
 
-首发建议仍为免费小流量、清晰单人、最长 5 分钟。支付、口型、背景声保留、多人对话及供应商切换继续后置。安装与验收操作见 [PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md)。
+首发建议仍为免费小流量、清晰单人、最长 5 分钟。支付、口型、背景声保留、多人对话及供应商切换继续后置。安装与验收操作见 [PRODUCTION_DEPLOYMENT.md](../PRODUCTION_DEPLOYMENT.md)。
