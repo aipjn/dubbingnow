@@ -109,18 +109,30 @@ test("language page selects its target; mobile upload and action fit in the firs
 
 test("pricing cannot take demo payments; FAQ opens; tools are linked", async ({
   page,
+  request,
 }) => {
+  const html = await (await request.get("/pricing")).text();
+  expect(html).toContain('data-amount-minor="1900">$19 per month</td>');
+  expect(html).toContain('data-amount-minor="4900">$49 per month</td>');
   await page.goto("/pricing");
+  const subscriptions = page.getByRole("link", {
+    name: "Subscriptions are opening soon",
+  });
+  await expect(subscriptions).toHaveCount(2);
+  for (const link of await subscriptions.all())
+    await expect(link).toHaveAttribute("href", "/contact");
   await expect(
-    page.getByRole("button", { name: "Choose Creator" }),
-  ).toBeDisabled();
+    page.getByRole("link", { name: "Create free account" }),
+  ).toHaveAttribute("href", "/register");
   await expect(page.getByText("500 credits", { exact: true })).toBeVisible();
   await page
     .locator("summary")
     .filter({ hasText: "How are credits counted?" })
     .click();
   await expect(
-    page.getByText("Credits are calculated", { exact: false }),
+    page.getByText("A minute costs 10 credits in standard mode", {
+      exact: false,
+    }),
   ).toBeVisible();
   await page.goto("/auto-dubbing");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(

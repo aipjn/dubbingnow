@@ -65,7 +65,12 @@ test("admin changes configurable rates and signup bonus; old balances remain", a
   await page.getByRole("button", { name: "Save credit settings" }).click();
   await expect(page.getByRole("status")).toContainText("Credit settings saved");
   await page.goto("/pricing");
-  await expect(page.getByText("600 credits", { exact: true })).toBeVisible();
+  const freePlan = page.locator(".pricing-card").filter({
+    has: page.getByText("Free", { exact: true }),
+  });
+  await expect(
+    freePlan.getByText("600 credits", { exact: true }),
+  ).toBeVisible();
   await expect(page.locator("main")).toContainText(
     "Standard: 30 credits / minute",
   );

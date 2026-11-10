@@ -91,6 +91,7 @@ export function Footer() {
           <Link href="/contact">Contact</Link>
           <Link href="/privacy">Privacy</Link>
           <Link href="/terms">Terms</Link>
+          <Link href="/refund-policy">Refund Policy</Link>
         </div>
       </div>
       <div className="container footer-bottom">

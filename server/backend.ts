@@ -284,6 +284,7 @@ export class Backend {
     if (path === "billing/policy" && method === "GET")
       return this.response(await this.store.policy());
     if (path === "billing/plans" && method === "GET")
+      // At 10 standard credits per minute, 200 and 600 credits provide 20 and 60 minutes at $0.82–$0.95 per minute to align with market pricing and cover costs.
       return this.response([
         {
           id: "free",
@@ -296,18 +297,18 @@ export class Backend {
         {
           id: "creator",
           name: "Creator",
-          amountMinor: null,
+          amountMinor: 1900,
           currency: "USD",
-          includedCredits: 1000,
-          available: false,
+          includedCredits: 200,
+          available: true,
         },
         {
           id: "studio",
           name: "Studio",
-          amountMinor: null,
+          amountMinor: 4900,
           currency: "USD",
-          includedCredits: 5000,
-          available: false,
+          includedCredits: 600,
+          available: true,
         },
       ]);
     if (path === "sessions" && method === "POST") {

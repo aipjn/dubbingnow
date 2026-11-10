@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -262,7 +263,7 @@ export function Faq({
   items = commonFaqs,
   title,
 }: {
-  items?: readonly (readonly string[])[];
+  items?: readonly (readonly string[] | readonly [string, ReactNode])[];
   title?: string;
 }) {
   return (

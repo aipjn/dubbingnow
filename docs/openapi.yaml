@@ -182,7 +182,8 @@ paths:
     get:
       operationId: getPlans
       security: []
-      summary: Authoritative prices, credit packs and purchase availability
+      summary: Free allowance and monthly subscription plans
+      description: The catalog lists subscription prices and allowances. Paid checkout is pending.
       responses:
         "200":
           description: Free and paid plans

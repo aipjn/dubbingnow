@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { operatorName, supportEmail } from "@/lib/service-info";
 export const metadata: Metadata = {
   title: "Service Terms | DubbingNow",
@@ -40,9 +41,20 @@ export default function Terms() {
       <p>
         Credits are reserved when a task is accepted, consumed on completion,
         and returned if the task fails or is cancelled. Processing and upload
-        attempts still count toward daily usage limits. Paid credit purchases
-        are not currently available. Current allowances and credit rates are
-        shown in the tool and on the pricing page.
+        attempts still count toward daily usage limits. The dubbing tool shows
+        your allowance and credit quote before processing.
+      </p>
+      <p>
+        Creator and Studio are monthly subscriptions that are opening soon. See
+        the{" "}
+        <Link className="underline" href="/pricing">
+          pricing page
+        </Link>{" "}
+        for plan allowances and the{" "}
+        <Link className="underline" href="/refund-policy">
+          Refund Policy
+        </Link>{" "}
+        for the cancellation and refund terms that apply once checkout opens.
       </p>
       <h2>Outputs and support</h2>
       <p>

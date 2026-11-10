@@ -3,20 +3,26 @@ import Link from "next/link";
 import { Check } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getApi } from "@/lib/api";
-import { ApiError, errorMessage } from "@/lib/api/errors";
+import { errorMessage } from "@/lib/api/errors";
 import type { BillingPlan } from "@/lib/api/types";
+import { defaultBillingPolicy } from "@/lib/billing/policy";
 import { useAccount } from "./account/provider";
+
+const CREDITS_PER_MINUTE = 10;
+const planIds = ["free", "creator", "studio"] as const;
+
 export function PricingCards() {
   const { policy, session } = useAccount();
-  const [offers, setOffers] = useState<BillingPlan[]>([]),
-    [error, setError] = useState(""),
-    [busy, setBusy] = useState("");
+  const [offers, setOffers] = useState<BillingPlan[] | null>(null);
+  const [error, setError] = useState("");
   useEffect(() => {
     let alive = true;
     getApi()
       .getPlans()
       .then((value) => {
-        if (alive) setOffers(value);
+        if (!alive) return;
+        setOffers(value);
+        setError("");
       })
       .catch((err) => {
         if (alive) setError(errorMessage(err));
@@ -25,132 +31,124 @@ export function PricingCards() {
       alive = false;
     };
   }, [policy?.version]);
-  async function checkout(planId: "creator" | "studio") {
-    if (!session?.user) {
-      window.location.assign("/login?next=%2Fpricing");
-      return;
-    }
-    setBusy(planId);
-    setError("");
-    const keyName = `dubbingnow.checkout.${session.id}.${planId}`;
-    try {
-      const key = sessionStorage.getItem(keyName) || crypto.randomUUID();
-      sessionStorage.setItem(keyName, key);
-      const result = await getApi().createCheckout({ planId }, key);
-      const url = new URL(result.url);
-      if (url.protocol !== "https:")
-        throw new Error(
-          "The payment service returned an invalid checkout URL.",
-        );
-      window.location.assign(url.href);
-    } catch (err) {
-      if (err instanceof ApiError && err.code === "CHECKOUT_EXPIRED")
-        sessionStorage.removeItem(keyName);
-      setError(errorMessage(err));
-    } finally {
-      setBusy("");
-    }
-  }
+  const loading = offers === null && !error;
+  const cards = loading ? planIds.map(() => null) : (offers ?? []);
+  const displayPolicy = policy ?? defaultBillingPolicy;
+
   return (
     <>
-      <div className="pricing-grid">
-        {offers.map((offer) => (
-          <article
-            className={`pricing-card ${offer.id === "creator" ? "featured-plan" : ""}`}
-            key={offer.id}
-          >
-            <span className="plan-name">{offer.name}</span>
-            <p>
-              {offer.id === "free"
-                ? "Find your voice in another language."
-                : "Make room for your next audience."}
-            </p>
-            <div
-              className={`price ${offer.amountMinor === null ? "pending-price" : ""}`}
-            >
-              {offer.amountMinor === null
-                ? "Coming soon"
-                : new Intl.NumberFormat("en", {
-                    style: "currency",
-                    currency: offer.currency,
-                    maximumFractionDigits: 2,
-                  }).format(offer.amountMinor / 100)}
-              {offer.amountMinor !== null && (
-                <span>
-                  {offer.id === "free" ? "/ welcome gift" : "/ credit pack"}
-                </span>
-              )}
-            </div>
-            <span className="plan-minutes">
-              {offer.includedCredits} credits
-            </span>
-            {offer.id === "free" ? (
-              <Link
-                className="button button-light"
-                href={session?.user ? "/account" : "/register"}
-              >
-                {session?.user ? "My credits →" : "Create free account →"}
-              </Link>
-            ) : (
-              <button
-                className={`button ${offer.id === "creator" ? "button-dark" : "button-light"}`}
-                disabled={
-                  !!busy || !offer.available || offer.amountMinor === null
-                }
-                onClick={() => void checkout(offer.id as "creator" | "studio")}
-              >
-                {busy === offer.id
-                  ? "Opening checkout…"
-                  : `Choose ${offer.name}`}
-              </button>
-            )}
-            <ul>
-              {[
-                offer.id === "free"
-                  ? "Granted once on your first sign-in"
-                  : "One-time credit pack",
-                "Audio and video dubbing",
-                "Clear single-speaker recordings",
-                "Download your finished recording",
-              ].map((feature) => (
-                <li key={feature}>
-                  <Check size={15} />
-                  {feature}
-                </li>
-              ))}
-            </ul>
-          </article>
-        ))}
-      </div>
-      {!offers.length && !error && <p role="status">Loading credit packs…</p>}
-      {policy && (
-        <div className="pricing-note">
-          <p>
-            Try a recording up to {policy.guestTrialSeconds} seconds without
-            signing in, after human verification. {policy.guestTrialUses} free{" "}
-            {policy.guestTrialUses === 1 ? "try" : "tries"}.
-          </p>
-          <Link className="text-link" href="/#dubbing-tool">
-            Try for free →
-          </Link>
-          <p>
-            Standard: {policy.creditsPerMinute.standard} credits / minute ·
-            High-fidelity: {policy.creditsPerMinute.high_fidelity} credits /
-            minute. Billed{" "}
-            {policy.rounding === "per_second"
-              ? "by the second"
-              : "per started minute"}
-            , rounded up to whole credits; minimum {policy.minimumCredits}{" "}
-            credit{policy.minimumCredits === 1 ? "" : "s"} per job.
-          </p>
-        </div>
-      )}
-      {!process.env.NEXT_PUBLIC_API_BASE_URL && (
-        <p className="pricing-note">
-          Preview rates · Credit packs and rates are provisional. Purchases are
-          disabled.
+      {loading && (
+        <p className="sr-only" role="status">
+          Loading pricing plans
         </p>
       )}
+      <div className="pricing-grid" aria-busy={loading}>
+        {cards.map((offer, index) => {
+          const id = offer?.id ?? planIds[index];
+          const free = id === "free";
+          const featured = id === "creator";
+          const buttonClass = `button ${featured ? "button-dark" : "button-light"}`;
+          const buttonText = free
+            ? session?.user
+              ? "My credits →"
+              : "Create free account →"
+            : "Subscriptions are opening soon";
+          const buttonHref = free
+            ? session?.user
+              ? "/account"
+              : "/register"
+            : "/contact";
+          return (
+            <article
+              aria-hidden={loading || undefined}
+              className={`pricing-card${featured ? " featured-plan" : ""}${loading ? " pricing-card-skeleton" : ""}`}
+              key={id}
+            >
+              {featured && <span className="plan-badge">Most Popular</span>}
+              <span className="plan-name">{offer?.name ?? "Plan name"}</span>
+              <p>
+                {free
+                  ? "Find your voice in another language."
+                  : "Make room for your next audience."}
+              </p>
+              <div
+                className={`price${offer?.amountMinor === null ? " pending-price" : ""}`}
+              >
+                {offer
+                  ? offer.amountMinor === null
+                    ? "Coming soon"
+                    : new Intl.NumberFormat("en", {
+                        style: "currency",
+                        currency: offer.currency,
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 2,
+                      }).format(offer.amountMinor / 100)
+                  : "—"}
+                {offer?.amountMinor !== null && (
+                  <span>{free ? " on signup" : " per month"}</span>
+                )}
+              </div>
+              <span className="plan-minutes">
+                {offer
+                  ? Math.floor(offer.includedCredits / CREDITS_PER_MINUTE)
+                  : "—"}{" "}
+                minutes · <span>{offer?.includedCredits ?? "—"} credits</span>
+              </span>
+              <p className="pricing-credit-rate">
+                {CREDITS_PER_MINUTE} credits = 1 minute (high-fidelity mode uses
+                2x credits)
+              </p>
+              {offer ? (
+                <Link className={buttonClass} href={buttonHref}>
+                  {buttonText}
+                </Link>
+              ) : (
+                <span className={buttonClass}>{buttonText}</span>
+              )}
+              <ul>
+                {[
+                  free
+                    ? "Granted once on your first sign-in"
+                    : "Monthly dubbing allowance",
+                  "Audio and video dubbing",
+                  "Clear single-speaker recordings",
+                  "Download your finished recording",
+                ].map((feature) => (
+                  <li key={feature}>
+                    <Check size={15} />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+            </article>
+          );
+        })}
+      </div>
+      <div className="pricing-note">
+        <p>
+          Try a recording up to {displayPolicy.guestTrialSeconds} seconds
+          without signing in, after human verification.{" "}
+          {displayPolicy.guestTrialUses} free{" "}
+          {displayPolicy.guestTrialUses === 1 ? "try" : "tries"}.
+        </p>
+        <Link className="text-link" href="/#dubbing-tool">
+          Try for free →
+        </Link>
+        <p>
+          Standard: {displayPolicy.creditsPerMinute.standard} credits / minute ·
+          High-fidelity: {displayPolicy.creditsPerMinute.high_fidelity} credits
+          / minute. Billed{" "}
+          {displayPolicy.rounding === "per_second"
+            ? "by the second"
+            : "per started minute"}
+          , rounded up to whole credits with a minimum of{" "}
+          {displayPolicy.minimumCredits} credit
+          {displayPolicy.minimumCredits === 1 ? "" : "s"} per job.
+        </p>
+        {!process.env.NEXT_PUBLIC_API_BASE_URL && (
+          <p>Demo accounts use a separate welcome credit allowance.</p>
+        )}
+      </div>
       {error && (
         <p className="checkout-error" role="alert">
           {error}

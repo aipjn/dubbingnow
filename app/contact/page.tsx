@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { operatorName, supportEmail } from "@/lib/service-info";
 export const metadata: Metadata = {
   title: "Contact | DubbingNow",
@@ -22,6 +23,18 @@ export default function Contact() {
           later.
         </p>
       )}
+      <p>
+        Creator and Studio subscriptions are opening soon. If you are interested
+        in a plan, tell us which one when you get in touch. Compare plans on the{" "}
+        <Link className="underline" href="/pricing">
+          pricing page
+        </Link>{" "}
+        and see the{" "}
+        <Link className="underline" href="/refund-policy">
+          Refund Policy
+        </Link>{" "}
+        for cancellation and refund details.
+      </p>
       <p>
         For a processing issue, include the task identifier and what happened.
         Do not send passwords or API keys. For recording or voice removal,

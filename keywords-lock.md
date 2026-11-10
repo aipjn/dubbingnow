@@ -11,6 +11,7 @@ Title 措辞、H1 补充句和 meta description 的调整遵守 [AGENTS.md](AGEN
 ## 基线来源与核验范围
 
 - 源码核验日期：2026-10-31；覆盖工作目录中由 `app/sitemap.ts` 枚举的全部 26 个公开页面及 6 个不索引的业务页面。
+- 定价页 H1 和 meta description 单独于 2026-11-09 按订阅定价页源码核验。
 - 关键词承接关系依据现有 URL、Title、H1 和正文主题归纳；辅助表达／意图用于解释既有分工，不代表要求向页面补写该短语。
 - Title、H1 和 canonical 逐页记录有效值。首页 Title 继承 `app/layout.tsx`；H1 中的样式标签和换行合并为可见文本，保留大小写和标点。
 - canonical 以生产域名 `https://dubbingnow.com` 为基准；源码通过 `lib/catalog.ts` 的 `siteUrl` 和根布局的 `metadataBase` 解析相对路径。更换该域名同样属于锁定项变更。
@@ -68,7 +69,7 @@ Title 措辞、H1 补充句和 meta description 的调整遵守 [AGENTS.md](AGEN
 | `/voice-dubbing`                      | Voice Dubbing - Dub Voices in Any Language \| DubbingNow    | Voice Dubbing                                    | `https://dubbingnow.com/voice-dubbing`                      |
 | `/audio-dubbing`                      | Audio Dubbing - Dub Audio Files Online \| DubbingNow        | Audio Dubbing                                    | `https://dubbingnow.com/audio-dubbing`                      |
 | `/languages`                          | Dubbing Languages - Explore Video Translation \| DubbingNow | A world of languages.                            | `https://dubbingnow.com/languages`                          |
-| `/pricing`                            | AI Dubbing Pricing - Start Free \| DubbingNow               | More stories. Fewer boundaries.                  | `https://dubbingnow.com/pricing`                            |
+| `/pricing`                            | AI Dubbing Pricing - Start Free \| DubbingNow               | AI dubbing pricing and credit plans             | `https://dubbingnow.com/pricing`                            |
 | `/how-to-dub-a-video`                 | How to Dub a Video into Another Language \| DubbingNow      | How to dub a video.                              | `https://dubbingnow.com/how-to-dub-a-video`                 |
 | `/blog`                               | The DubbingNow Journal - Dubbing Guides                     | The journal.                                     | `https://dubbingnow.com/blog`                               |
 | `/blog/preparing-a-video-for-dubbing` | Prepare Your Video for AI Dubbing \| DubbingNow             | Before you dub: give your words room to breathe. | `https://dubbingnow.com/blog/preparing-a-video-for-dubbing` |
@@ -98,7 +99,7 @@ Title 措辞、H1 补充句和 meta description 的调整遵守 [AGENTS.md](AGEN
 
 ## Meta description 基线
 
-meta description 属于谨慎区。以下内容记录 2026-10-31 源码值，便于识别后续修改及核对发布间隔。
+meta description 属于谨慎区。核验日期见「基线来源与核验范围」，用于识别后续修改及核对发布间隔。
 
 | URL                                             | meta description 原文                                                                                                                                         |
 | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -108,7 +109,7 @@ meta description 属于谨慎区。以下内容记录 2026-10-31 源码值，便
 | `/voice-dubbing`                                | Voice dubbing for clear, single-speaker recordings, using a preset voice or a clone of your narrator.                                                         |
 | `/audio-dubbing`                                | Audio dubbing for clear, single-speaker recordings: solo podcasts, lessons, and voice recordings.                                                             |
 | `/languages`                                    | Explore target languages for AI video and audio dubbing, from Spanish and French to Japanese and Chinese.                                                     |
-| `/pricing`                                      | Start with a free dubbing allowance, then choose a credit pack for more audio and video translation.                                                          |
+| `/pricing`                                      | Compare monthly AI dubbing plans and get 5 minutes of standard dubbing when you create a free account.                                                        |
 | `/how-to-dub-a-video`                           | Learn how to prepare a video, choose a target language, review translated speech, and download an AI dub.                                                     |
 | `/blog`                                         | Practical guides for translating your recordings and reaching audiences in another language.                                                                  |
 | `/blog/preparing-a-video-for-dubbing`           | Prepare clear, single-speaker video for AI dubbing, with practical checks for narration, names, translation, and timing.                                      |

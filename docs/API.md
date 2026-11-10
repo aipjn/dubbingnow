@@ -95,11 +95,13 @@ Job.result 固定 mediaType=audio，包含 preview/download（HTTPS签名URL、f
 
 管理权限必须后台检查；隐藏按钮不是授权。管理员不能通过普通 profile API 修改 role，积分不能 PATCH 任意余额。流水不可覆盖、删除或由用户直接写入。当前 SQLite 表结构见 `server/store.ts`：accounts(issuer,subject唯一)、wallets、credits、settings、guests、trial_budgets、limits、human_tokens、uploads、quotes、jobs、idempotency、audit。checkouts/webhook_events 留给后续支付实现。User status 改动和 policy 改动也写审计，管理调整同一事务写钱包与流水。
 
-## 充值契约（尚未启用）
+## 订阅套餐与结账
 
-当前服务返回未定价套餐（available=false），创建 checkout 返回 503 SERVICE_UNAVAILABLE，读取未知 checkout 返回 410 CHECKOUT_EXPIRED。下面是后续支付接入的目标契约，不表示已经实现收款。
+`GET /billing/plans` 返回 `{id,name,amountMinor,currency,includedCredits,available}[]`。Free 的积分来自一次性注册赠送策略。Creator 每月 19 美元（`1900` 美分），包含 200 积分。Studio 每月 49 美元（`4900` 美分），包含 600 积分。
 
-`GET /billing/plans` 返回 `{id,name,amountMinor,currency,includedCredits,available}[]`。free 是一次注册赠送；amountMinor=null 且 available=false 表示价格未确定，按钮禁用。当前 Creator1000/Studio5000 是示意包，不能作为正式销售参数。
+两档付费套餐均在目录中标为 `available: true`。定价页将订阅入口指向 `/contact`，创建 checkout 返回 `503 SERVICE_UNAVAILABLE`，读取未知 checkout 返回 `410 CHECKOUT_EXPIRED`。
+
+### 支付接入目标契约
 
 `POST /billing/checkout {planId}` 只允许登录用户，必须幂等 key。服务端从计划目录读取金额/积分，不能接受浏览器金额、credits或任意 return URL；返回 `{id,url,expiresAt}`，url 是可信 HTTPS 托管支付。返回页面固定配置 `/billing/return?checkout_id=<id>`。`GET /billing/checkouts/{id}` 只许 owner，返回 `{id,status,creditsGranted}`。返回 URL /前端 success 参数不能确认收款；必须验证支付 webhook 签名、金额、币种、plan和owner并原子写 purchase/余额，以支付事件唯一 ID 防重。paid 只表示积分已经成功入账，pending 不能显示已到账。过期支付票据返回 CHECKOUT_EXPIRED。
 

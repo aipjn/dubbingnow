@@ -672,17 +672,17 @@ export class DemoDubbingApi implements DubbingApi {
       {
         id: "creator",
         name: "Creator",
-        amountMinor: null,
+        amountMinor: 1900,
         currency: "USD",
-        includedCredits: 1000,
+        includedCredits: 200,
         available: false,
       },
       {
         id: "studio",
         name: "Studio",
-        amountMinor: null,
+        amountMinor: 4900,
         currency: "USD",
-        includedCredits: 5000,
+        includedCredits: 600,
         available: false,
       },
     ];

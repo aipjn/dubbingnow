@@ -94,7 +94,7 @@ CLI 只授予已有账户角色并记录审计。API 不提供公开授予管理
 
 声音克隆默认使用 Fish Audio inline 模式：只上传原素材，每次从当前任务选取参考音，不创建保存音色。单席位持久复用仅供显式 `saved_test` 历史测试，见 [FISH_TESTING.md](archive/FISH_TESTING.md)。Google 克隆可显式配置启用，其额外录音规则见前期 [VOICE_CLONING.md](archive/VOICE_CLONING.md)。不做口型重建；多人交叠语音不支持独立重建，对齐有模型估计与语速调整误差。没有结果缓存，`cacheHit=false`。
 
-价格与支付供应商尚未确定，Creator/Studio unavailable；创建 checkout 返回 503，不收款、不模拟到账。真实支付 webhook 后续接入。
+套餐价格、积分额度和结账状态见 [订阅套餐与结账](API.md#订阅套餐与结账)。支付 webhook 属于结账接入的后续工作。
 
 ## 部署与验证
 

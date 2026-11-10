@@ -26,6 +26,21 @@ assert.deepEqual(health.data.configured, {
 const policy = await api("billing/policy");
 assert.equal(policy.data.signupCredits, 50);
 assert.equal(policy.data.guestTrialSeconds, 30);
+const plans = await api("billing/plans");
+assert.equal(plans.response.status, 200);
+assert.deepEqual(
+  plans.data.map(({ id, amountMinor, includedCredits, available }) => [
+    id,
+    amountMinor,
+    includedCredits,
+    available,
+  ]),
+  [
+    ["free", 0, policy.data.signupCredits, true],
+    ["creator", 1900, 200, true],
+    ["studio", 4900, 600, true],
+  ],
+);
 const session = await api("sessions", { method: "POST", body: {} });
 assert.equal(session.response.status, 201);
 assert.equal(session.data.user, null);
@@ -86,12 +101,12 @@ try {
   await expect(
     page.getByText(`${policy.data.signupCredits} credits`, { exact: true }),
   ).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Choose Creator" }),
-  ).toBeDisabled();
-  await expect(
-    page.getByRole("button", { name: "Choose Studio" }),
-  ).toBeDisabled();
+  const subscriptions = page.getByRole("link", {
+    name: "Subscriptions are opening soon",
+  });
+  await expect(subscriptions).toHaveCount(2);
+  for (const link of await subscriptions.all())
+    await expect(link).toHaveAttribute("href", "/contact");
   await page.goto(`${origin}/login`);
   await page.getByRole("button", { name: "Continue to sign in" }).click();
   await expect(page.locator(".account-error")).toContainText(

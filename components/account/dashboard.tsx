@@ -95,7 +95,7 @@ export function AccountDashboard() {
           </strong>
           <p>{quota?.reservedCredits || 0} credits reserved for processing</p>
           <Link className="text-link" href="/pricing">
-            Explore credit packs →
+            Compare subscription plans →
           </Link>
         </div>
         <div className="account-card">
