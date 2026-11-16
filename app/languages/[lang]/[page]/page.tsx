@@ -1,10 +1,49 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DubbingTool } from "@/components/dubbing-tool";
 import { Breadcrumbs } from "@/components/shell";
 import { Faq, HowItWorks, JsonLd, ToolLinks } from "@/components/content";
 import { commonFaqs, languages } from "@/lib/catalog";
 import { languageContent } from "@/lib/language-content";
+const relatedLanguageGroups = [
+  {
+    codes: ["en", "es", "pt"],
+    context: "For a release across the Americas, you can also plan",
+  },
+  {
+    codes: ["fr", "de", "nl"],
+    context: "For a rollout across neighboring European markets, consider",
+  },
+  {
+    codes: ["ja", "ko", "zh"],
+    context: "For separate releases across East Asia, you can also prepare",
+  },
+  {
+    codes: ["hi", "ar", "it"],
+    context: "If your course needs additional language editions, consider",
+  },
+];
+
+const hindiCourseExample = [
+  [
+    "Pick a test lesson.",
+    "Export a clear three-minute clip of one instructor explaining how to read a chart. Keep the labels on screen while the instructor points to them.",
+  ],
+  [
+    "Set up the Hindi dub.",
+    "Upload the clip, set English as the source and Hindi as the target, and try a preset voice. If the instructor has given permission, compare it with a clone from a clean passage in the same clip.",
+  ],
+  [
+    "Ask a learner to follow the chart.",
+    "Play the preview for a Hindi-speaking reviewer and ask them to identify both axes and explain what the trend means. Check dates, units, and where the narration lands as the chart changes.",
+  ],
+  [
+    "Publish the Hindi edition.",
+    "Download the approved dub and add translated chart labels or Devanagari captions in your editor if the course needs them. Save the English and Hindi exports as separate versions of the same lesson.",
+  ],
+] as const;
+
 export function generateStaticParams() {
   return languages.map((l) => ({
     lang: l.slug,
@@ -46,6 +85,13 @@ export default async function LanguagePage({
   const l = await lookup(params);
   if (!l) notFound();
   const content = languageContent[l.slug];
+  const relatedGroup = relatedLanguageGroups.find(({ codes }) =>
+    codes.includes(l.code),
+  );
+  const relatedLanguages = languages.filter(
+    (language) =>
+      language.code !== l.code && relatedGroup?.codes.includes(language.code),
+  );
   return (
     <>
       <JsonLd
@@ -84,6 +130,21 @@ export default async function LanguagePage({
         </p>
         <DubbingTool defaultTarget={l.code} />
       </section>
+      {l.code === "hi" && (
+        <section className="tool-intro container">
+          <h2>Hindi dubbing for creators in India</h2>
+          <p>
+            If you make videos in India, the language you record in may depend
+            on who is watching each cut. A Bollywood creator can adapt a
+            licensed, single-narrator behind-the-scenes clip from Hindi to
+            English for viewers overseas. A YouTube creator can give an English
+            tutorial a Hindi edition while keeping both versions available. For
+            a course sold across India, a Hindi voice track can let learners
+            follow the instructor in Hindi while English menu labels remain
+            recognizable on screen.
+          </p>
+        </section>
+      )}
       <HowItWorks
         title={content?.workflowTitle}
         description={content?.workflowDescription}
@@ -103,6 +164,40 @@ export default async function LanguagePage({
             </section>
           ))}
         </section>
+      )}
+      {l.code === "hi" && (
+        <section className="article container language-editorial">
+          <h2>Example: Dub an English chart-reading lesson into Hindi</h2>
+          <ol className="list-decimal pl-6">
+            {hindiCourseExample.map(([step, detail]) => (
+              <li key={step}>
+                <p>
+                  <strong>{step}</strong> {detail}
+                </p>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+      {relatedGroup && (
+        <div className="tool-intro container">
+          <p>
+            {relatedGroup.context}{" "}
+            {relatedLanguages.map((language, index) => (
+              <span key={language.code}>
+                {index > 0 && " and "}
+                <Link
+                  className="underline"
+                  href={`/languages/${language.slug}/dub-video-to-${language.slug}`}
+                >
+                  {language.name} dubbing
+                </Link>
+              </span>
+            ))}
+            . Use a short sample for each edition and have a fluent reviewer
+            check the terminology and timing.
+          </p>
+        </div>
       )}
       <Faq
         title={

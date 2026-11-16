@@ -1,3 +1,34 @@
+import Link from "next/link";
+
+const comparison = [
+  ["Turnaround", "Processing and review.", "Casting, recording, and pickups."],
+  [
+    "Billing",
+    "Credits per clip and target language.",
+    "Session, project, or usage fees.",
+  ],
+  [
+    "Multilingual consistency",
+    "Reuse the same voice reference, then review each language.",
+    "Direct each cast with a shared brief.",
+  ],
+  [
+    "Emotion and irony",
+    "Review subtle jokes and emotional shifts carefully.",
+    "An actor can adjust delivery to direction.",
+  ],
+  [
+    "Brand and proper names",
+    "Check pronunciation in the generated track.",
+    "Give the actor a pronunciation reference.",
+  ],
+  [
+    "Best fit",
+    "Solo tutorials, lessons, and product updates.",
+    "Character work, brand ads, and scripted scenes.",
+  ],
+];
+
 export function VoiceDubbingGuide() {
   return (
     <section
@@ -40,6 +71,57 @@ export function VoiceDubbingGuide() {
           market. Hire a human when the delivery itself is the point — an ad, a
           character, a script where a joke or a nuance has no room for
           approximation.
+        </p>
+        <div className="overflow-x-auto">
+          <table className="language-guidance-table">
+            <caption className="sr-only">
+              AI dubbing and human voice actors
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">What to compare</th>
+                <th scope="col">AI dubbing</th>
+                <th scope="col">Human voice actor</th>
+              </tr>
+            </thead>
+            <tbody>
+              {comparison.map(([dimension, ai, actor]) => (
+                <tr key={dimension}>
+                  <th scope="row">{dimension}</th>
+                  <td>{ai}</td>
+                  <td>{actor}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Use AI for repeatable narration when you can review each language
+          before publishing. Hire an actor when the performance carries the
+          message or a client needs to approve a specific reading. For a mixed
+          project, use actors for key scenes and review AI-dubbed explainers
+          separately.
+        </p>
+      </section>
+      <section>
+        <h2>How voice dubbing compares with other options</h2>
+        <p>
+          Voice dubbing changes the spoken voice.{" "}
+          <Link className="underline" href="/audio-dubbing">
+            Audio dubbing
+          </Link>{" "}
+          gives you a replacement audio track for a podcast or an edit you plan
+          to mix yourself.{" "}
+          <Link className="underline" href="/ai-video-dubbing">
+            AI video dubbing
+          </Link>{" "}
+          pairs the new soundtrack with the original picture for a complete
+          video export. Subtitles leave the soundtrack audible and add words
+          viewers can read. See{" "}
+          <Link className="underline" href="/how-to-dub-a-video">
+            how to dub a video
+          </Link>{" "}
+          for the upload, review, and download steps.
         </p>
       </section>
       <section>

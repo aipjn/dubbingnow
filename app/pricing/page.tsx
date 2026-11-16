@@ -14,10 +14,18 @@ const pricingRows = [
   {
     name: "Free",
     amountMinor: 0,
-    allowance: "50 credits (5 minutes) on signup",
+    allowance: "50 credits (5 minutes per target language) on signup",
   },
-  { name: "Creator", amountMinor: 1900, allowance: "200 credits (20 minutes)" },
-  { name: "Studio", amountMinor: 4900, allowance: "600 credits (60 minutes)" },
+  {
+    name: "Creator",
+    amountMinor: 1900,
+    allowance: "200 credits (20 minutes per target language)",
+  },
+  {
+    name: "Studio",
+    amountMinor: 4900,
+    allowance: "600 credits (60 minutes per target language)",
+  },
 ];
 
 export default function PricingPage() {
@@ -63,6 +71,10 @@ export default function PricingPage() {
             ))}
           </tbody>
         </table>
+        <p className="mb-8">
+          Each target language is billed separately against your plan’s shared
+          balance.
+        </p>
         <PricingCards />
       </section>
       <Faq

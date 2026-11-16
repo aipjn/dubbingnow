@@ -198,9 +198,8 @@ export function DubbingGuide() {
             processing continues in the background. When returning to a video
             project, you may need to select the same original video again to
             assemble its video download. Results remain available for 24 hours
-            after completion, so save the finished audio before it expires. See
-            the <Link href="/privacy">privacy notice</Link> for file handling
-            and retention details.
+            after completion, so save the finished audio before it expires. The
+            privacy notice in the footer explains file handling and retention.
           </p>
         </section>
         <section>

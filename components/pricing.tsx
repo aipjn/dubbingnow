@@ -64,7 +64,6 @@ export function PricingCards() {
               className={`pricing-card${featured ? " featured-plan" : ""}${loading ? " pricing-card-skeleton" : ""}`}
               key={id}
             >
-              {featured && <span className="plan-badge">Most Popular</span>}
               <span className="plan-name">{offer?.name ?? "Plan name"}</span>
               <p>
                 {free

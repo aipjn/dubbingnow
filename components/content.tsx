@@ -279,12 +279,6 @@ export function Faq({
             </>
           )}
         </h2>
-        <p>
-          Still curious?{" "}
-          <Link href="/contact">
-            Get in touch <ArrowUpRight size={13} />
-          </Link>
-        </p>
       </div>
       <div className="faq-list">
         {items.map(([question, answer]) => (

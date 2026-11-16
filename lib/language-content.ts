@@ -221,6 +221,18 @@ export const languageContent: Record<string, LanguageContent | undefined> = {
     ],
     faqs: [
       [
+        "Can I dub a Hindi video into English?",
+        "Yes. Choose Hindi as the source and English as the target for a clear, single-speaker recording. This Hindi-to-English dubbing workflow works well for solo YouTube narration or a course lesson. Ask a fluent reviewer to check Hindi idioms, names, and English words already present in the source.",
+      ],
+      [
+        "Does the tool handle regional Hindi accents?",
+        "Hindi dubbing uses one Hindi language option. Use a clean sample of the speaker’s regional accent and check both the translation and the generated pronunciation with a Hindi-speaking reviewer. Try a preset voice if the cloned output is difficult for your audience to follow.",
+      ],
+      [
+        "Can I dub a Bollywood clip without losing the original audio?",
+        "Your original file stays intact. The exported Hindi dub uses a new soundtrack, including in place of the original music and effects. For a Bollywood clip you have permission to adapt, use one isolated narrator and add any separately licensed music or effects in your editor after downloading the dub.",
+      ],
+      [
         "Can I choose Hinglish or control individual pronunciations?",
         "There is no Hinglish style switch or pronunciation dictionary in the tool. Keep English names and interface labels in a checklist, then have a Hindi-speaking listener review how they sound inside the generated sentences. Clarify the original explanation and test a short new recording if an essential term is unclear.",
       ],

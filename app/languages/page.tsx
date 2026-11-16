@@ -26,6 +26,7 @@ export default function LanguagesPage() {
         {languages.map((lang) => (
           <Link
             key={lang.code}
+            aria-label={`${lang.name} dubbing`}
             href={`/languages/${lang.slug}/dub-video-to-${lang.slug}`}
           >
             <span className="language-flag">{lang.flag}</span>
